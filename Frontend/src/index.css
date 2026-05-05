@@ -56,6 +56,8 @@ body { margin: 0; font-family: 'IBM Plex Sans', system-ui, sans-serif; backgroun
 .animate-slide-in { animation: slideIn 0.35s ease both; }
 .stagger-1 { animation-delay:0.05s; } .stagger-2 { animation-delay:0.1s; } .stagger-3 { animation-delay:0.15s; } .stagger-4 { animation-delay:0.2s; } .stagger-5 { animation-delay:0.25s; } .stagger-6 { animation-delay:0.3s; }
 
+.label-xs { display:block; font-size:10px; font-weight:600; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:6px; }
+
 input[type=range] { -webkit-appearance:none; width:100%; height:4px; border-radius:2px; background:var(--border); outline:none; }
 input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:18px; height:18px; border-radius:50%; background:var(--color-primary); cursor:pointer; box-shadow:0 1px 4px rgba(27,79,138,0.3); transition:transform 0.15s; }
 input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.15); }

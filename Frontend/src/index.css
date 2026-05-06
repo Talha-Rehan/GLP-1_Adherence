@@ -56,8 +56,75 @@ body { margin: 0; font-family: 'IBM Plex Sans', system-ui, sans-serif; backgroun
 .animate-slide-in { animation: slideIn 0.35s ease both; }
 .stagger-1 { animation-delay:0.05s; } .stagger-2 { animation-delay:0.1s; } .stagger-3 { animation-delay:0.15s; } .stagger-4 { animation-delay:0.2s; } .stagger-5 { animation-delay:0.25s; } .stagger-6 { animation-delay:0.3s; }
 
-.label-xs { display:block; font-size:10px; font-weight:600; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:6px; }
-
 input[type=range] { -webkit-appearance:none; width:100%; height:4px; border-radius:2px; background:var(--border); outline:none; }
 input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:18px; height:18px; border-radius:50%; background:var(--color-primary); cursor:pointer; box-shadow:0 1px 4px rgba(27,79,138,0.3); transition:transform 0.15s; }
 input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.15); }
+
+/* ── Executive Summary Page ────────────────────────────────────────── */
+.exec-summary-page {
+  max-width: 1320px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.exec-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+}
+
+.exec-segment-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.exec-bottom-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+/* ── Tablet ── */
+@media (max-width: 1200px) {
+  .exec-kpi-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .exec-segment-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ── Small Tablet ── */
+@media (max-width: 900px) {
+  .exec-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .exec-segment-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .exec-bottom-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Mobile ── */
+@media (max-width: 640px) {
+  .exec-summary-page {
+    gap: 16px;
+  }
+  .exec-kpi-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .exec-segment-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .exec-bottom-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}

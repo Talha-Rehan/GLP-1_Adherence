@@ -144,3 +144,54 @@ input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.15); }
   .risk-panel-page .data-table th,
   .risk-panel-page .data-table td { padding: 8px 10px; }
 }
+
+/* ── Patient Detail Page ───────────────────────────────────────────── */
+.patient-detail-page {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.detail-hero-grid {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.detail-content-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.detail-left-col,
+.detail-right-col {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.detail-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 900px) {
+  .detail-content-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .detail-hero-grid {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .detail-stats-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}

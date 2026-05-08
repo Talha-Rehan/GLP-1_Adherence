@@ -5,6 +5,7 @@ import {
 } from 'recharts';
 import { SectionHeader } from '../components/shared';
 import { calcBudgetImpact, SEGMENT_COLORS, SEGMENT_SHORT } from '../data/mockData';
+import { useBudgetImpact } from '../hooks/useBudgetImpact';
 import { TrendingDown, DollarSign, CheckCircle, XCircle, Download } from 'lucide-react';
 
 function ScenarioSlider({ label, sub, value, min, max, step, onChange, format }) {
@@ -38,11 +39,16 @@ export default function BudgetSimulator() {
   const [interventionCost, setInterventionCost] = useState(500);
   const [scope, setScope]                       = useState(100);
   const [exported, setExported]                 = useState(false);
+  const { result: apiResult, calculate }        = useBudgetImpact();
 
-  const results = useMemo(
-    () => calcBudgetImpact(dropoutReduction, interventionCost, scope),
-    [dropoutReduction, interventionCost, scope],
-  );
+  // Use API result if available, fall back to local calculation for instant UI
+  const results = apiResult ?? calcBudgetImpact(dropoutReduction, interventionCost, scope);
+
+  // Fire API call whenever sliders change (debounced via useMemo trigger)
+  useMemo(() => {
+    calculate(dropoutReduction, interventionCost, scope);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dropoutReduction, interventionCost, scope]);
 
   const totalNet              = results.reduce((a, r) => a + r.netSaving, 0);
   const totalWasteRecovered   = results.reduce((a, r) => a + r.wasteRecovered, 0);

@@ -4,14 +4,17 @@ import {
   ReferenceLine, ResponsiveContainer, BarChart, Bar, Cell,
 } from 'recharts';
 import { SectionHeader } from '../components/shared';
-import { ceaData, segmentProfiles, SEGMENT_COLORS, SEGMENT_SHORT, SEGMENT_LABELS } from '../data/mockData';
+import { SEGMENT_COLORS, SEGMENT_SHORT, SEGMENT_LABELS } from '../data/mockData';
+import { useCostEffectiveness } from '../hooks/useCostEffectiveness';
+import { useSegments } from '../hooks/useSegments';
 
 const ICER_THRESHOLD = 50000;
 
-// Adherence rates per cluster (from segment profiles)
-const ADHERENCE = segmentProfiles.map(s => s.adherence);
-
 export default function CostEffectiveness() {
+  const { data: costData } = useCostEffectiveness();
+  const { segments }       = useSegments();
+  const ceaData  = costData.cea;
+  const ADHERENCE = segments.map(s => s.adherence);
   const [metric, setMetric]           = useState('hba1c');  // 'hba1c' | 'weight'
   const [comparator, setComparator]   = useState('insulin'); // 'insulin' | 'sglt2'
   const [visibleSegs, setVisibleSegs] = useState([0, 1, 2, 3]);

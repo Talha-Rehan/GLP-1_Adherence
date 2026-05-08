@@ -1,22 +1,12 @@
 import { BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Activity, DollarSign, Users, TrendingDown, AlertTriangle, BarChart2, ArrowRight } from 'lucide-react';
 import { KPICard, SectionHeader, ChartTooltip } from '../components/shared';
-import { summaryKPIs, adherenceBySegment, globalSHAPDrivers, dropoutByWindow, SEGMENT_COLORS } from '../data/mockData';
+import { SEGMENT_COLORS } from '../data/mockData';
 import { useRole } from '../context/RoleContext';
 import { Link } from 'react-router-dom';
+import { useSummary } from '../hooks/useSummary';
 
 const fmt = (n) => n >= 1e6 ? `$${(n/1e6).toFixed(1)}M` : n >= 1e3 ? `$${(n/1e3).toFixed(1)}K` : `$${n.toLocaleString()}`;
-
-/* ── Derived data from existing mockData ──────────────────────────── */
-const totalN = adherenceBySegment.reduce((s, seg) => s + seg.n, 0);
-const segmentCards = adherenceBySegment.map(seg => {
-  const dropouts = Math.round((1 - seg.adherence) * seg.n);
-  const atRisk = Math.round(dropouts * summaryKPIs.avgAnnualCost);
-  const shareOfTotal = seg.n / totalN;
-  const adherencePct = Math.round(seg.adherence * 100);
-  const isHealthy = adherencePct >= 70;
-  return { ...seg, dropouts, atRisk, shareOfTotal, adherencePct, isHealthy };
-});
 
 /* ── Adherence progress bar color ──────────────────────────────────── */
 function getAdherenceBarColor(pct) {
@@ -91,7 +81,7 @@ function SegmentCard({ seg, delay }) {
 }
 
 /* ── Population Bar Component ──────────────────────────────────────── */
-function PopulationBar() {
+function PopulationBar({ totalN, segmentCards }) {
   return (
     <div className="mb-5">
       <div className="flex items-center justify-between mb-2">
@@ -142,6 +132,22 @@ function PopulationBar() {
 /* ── Main Page ─────────────────────────────────────────────────────── */
 export default function ExecutiveSummary() {
   const { isInsurer } = useRole();
+  const { data: summaryData } = useSummary();
+
+  const summaryKPIs        = summaryData.kpis;
+  const adherenceBySegment = summaryData.adherence_by_segment;
+  const globalSHAPDrivers  = summaryData.global_shap_drivers;
+  const dropoutByWindow    = summaryData.dropout_by_window;
+
+  const totalN = adherenceBySegment.reduce((s, seg) => s + seg.n, 0);
+  const segmentCards = adherenceBySegment.map(seg => {
+    const dropouts    = Math.round((1 - seg.adherence) * seg.n);
+    const atRisk      = Math.round(dropouts * (summaryKPIs.avgAnnualCost ?? summaryKPIs.avg_annual_cost ?? 10603));
+    const shareOfTotal = seg.n / (totalN || 1);
+    const adherencePct = Math.round(seg.adherence * 100);
+    const isHealthy    = adherencePct >= 70;
+    return { ...seg, dropouts, atRisk, shareOfTotal, adherencePct, isHealthy };
+  });
 
   return (
     <div className="exec-summary-page">
@@ -156,14 +162,14 @@ export default function ExecutiveSummary() {
 
       {/* ── Zone A — KPI Cards ─────────────────────────────────────────── */}
       <div className="exec-kpi-grid">
-        <KPICard label="Total Patients" value={summaryKPIs.totalPatients.toLocaleString()} icon={Users} color="#1B4F8A" delay={0} />
-        <KPICard label="Overall Adherence" value={`${(summaryKPIs.adherenceRate*100).toFixed(0)}%`} icon={Activity}
+        <KPICard label="Total Patients" value={(summaryKPIs.totalPatients ?? summaryKPIs.total_patients ?? 0).toLocaleString()} icon={Users} color="#1B4F8A" delay={0} />
+        <KPICard label="Overall Adherence" value={`${((summaryKPIs.adherenceRate ?? summaryKPIs.adherence_rate ?? 0)*100).toFixed(0)}%`} icon={Activity}
           sub="vs 47% published benchmark" trend={0} trendLabel="Aligned with benchmark" color="#2E7D32" delay={0.05} />
-        <KPICard label="Population Dropout" value={`${(summaryKPIs.dropoutRate*100).toFixed(0)}%`} icon={TrendingDown}
+        <KPICard label="Population Dropout" value={`${((summaryKPIs.dropoutRate ?? summaryKPIs.dropout_rate ?? 0)*100).toFixed(0)}%`} icon={TrendingDown}
           sub="Patients discontinuing therapy" trend={-1} trendLabel="Above ideal" color="#C62828" delay={0.10} />
-        <KPICard label="Avg Annual Drug Cost" value={`$${summaryKPIs.avgAnnualCost.toLocaleString()}`} icon={DollarSign}
+        <KPICard label="Avg Annual Drug Cost" value={`$${(summaryKPIs.avgAnnualCost ?? summaryKPIs.avg_annual_cost ?? 0).toLocaleString()}`} icon={DollarSign}
           sub="Per patient per year" color="#EF6C00" delay={0.15} />
-        <KPICard label="Est. Wasted Spend" value={fmt(summaryKPIs.wastedSpendAnnual)} icon={BarChart2}
+        <KPICard label="Est. Wasted Spend" value={fmt(summaryKPIs.wastedSpendAnnual ?? summaryKPIs.wasted_spend_annual ?? 0)} icon={BarChart2}
           sub="Paid for patients who dropout" trend={-1} trendLabel="Opportunity for reduction" color="#C62828" delay={0.20} />
       </div>
 
@@ -187,7 +193,7 @@ export default function ExecutiveSummary() {
           </Link>
         </div>
 
-        <PopulationBar />
+        <PopulationBar totalN={totalN} segmentCards={segmentCards} />
 
         {/* Segment Cards Grid */}
         <div className="exec-segment-grid">

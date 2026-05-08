@@ -5,7 +5,8 @@ import {
 } from 'recharts';
 import { LayoutGrid, Rows } from 'lucide-react';
 import { SectionHeader, ProgressBar } from '../components/shared';
-import { segmentProfiles, SEGMENT_COLORS, SEGMENT_LABELS, SEGMENT_SHORT, calcBudgetImpact } from '../data/mockData';
+import { SEGMENT_COLORS, SEGMENT_LABELS, SEGMENT_SHORT, calcBudgetImpact } from '../data/mockData';
+import { useSegments } from '../hooks/useSegments';
 import { useRole } from '../context/RoleContext';
 
 const fmt$ = n => `$${n.toLocaleString()}`;
@@ -54,11 +55,12 @@ const COMPARE_ROWS = [
 
 export default function SegmentExplorer() {
   const { isInsurer } = useRole();
+  const { segments: segmentProfiles } = useSegments();
   const [active, setActive] = useState(0);
   const [mode, setMode]     = useState('single');
   const [roiPct, setRoiPct] = useState(15);
 
-  const seg   = segmentProfiles[active];
+  const seg   = segmentProfiles[active] ?? segmentProfiles[0];
   const color = SEGMENT_COLORS[active];
 
   const roiResults = useMemo(() => calcBudgetImpact(roiPct, 500, 100), [roiPct]);

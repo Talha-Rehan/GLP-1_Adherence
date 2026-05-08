@@ -1,29 +1,17 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
   ReferenceLine, ResponsiveContainer, Legend,
 } from 'recharts';
 import { SectionHeader, CheckpointTable } from '../components/shared';
-import { survivalCurves, survivalCheckpoints, medianSurvival, SEGMENT_COLORS, SEGMENT_LABELS } from '../data/mockData';
+import { SEGMENT_COLORS, SEGMENT_LABELS } from '../data/mockData';
+import { useSurvival } from '../hooks/useSurvival';
 
-// Merge all curves into one dataset keyed by day, including ±5% CI bounds per segment
-const mergedData = survivalCurves[0].data.map((_, idx) => {
-  const day   = survivalCurves[0].data[idx].day;
-  const point = { day };
-  survivalCurves.forEach(sc => {
-    const s = sc.data[idx].survival;
-    point[`seg${sc.cluster}`]    = s;
-    // CI narrows where survival approaches 0 or 1 (Greenwood approximation proxy)
-    point[`seg${sc.cluster}_hi`] = Math.min(1, +(s + 0.05 * Math.sqrt(s * (1 - s + 0.01))).toFixed(4));
-    point[`seg${sc.cluster}_lo`] = Math.max(0, +(s - 0.05 * Math.sqrt(s * (1 - s + 0.01))).toFixed(4));
-  });
-  return point;
-});
-
-// Micro sparkline helper (uses pre-computed mergedData subset)
-function Sparkline({ cluster, color }) {
+// Micro sparkline helper
+function Sparkline({ cluster, color, curves }) {
   const w = 80, h = 28;
-  const pts = survivalCurves[cluster].data;
+  const sc  = curves.find(c => c.cluster === cluster) ?? curves[0];
+  const pts = sc.data;
   const xs  = pts.map(p => (p.day / 180) * w);
   const ys  = pts.map(p => h - p.survival * h);
   const d   = pts.map((_, i) => `${i === 0 ? 'M' : 'L'}${xs[i].toFixed(1)},${ys[i].toFixed(1)}`).join(' ');
@@ -35,12 +23,32 @@ function Sparkline({ cluster, color }) {
 }
 
 export default function SurvivalAnalysis() {
+  const { data: survivalData }  = useSurvival();
+  const survivalCurves          = survivalData.curves;
+  const survivalCheckpoints     = survivalData.checkpoints;
+  const medianSurvival          = survivalData.medianSurvival;
+
   const [visible, setVisible]   = useState([0, 1, 2, 3]);
   const [showCI, setShowCI]     = useState(false);
   const [showRefs, setShowRefs] = useState(true);
   const [highlight, setHighlight] = useState(null);
 
   const toggle = (i) => setVisible(v => v.includes(i) ? v.filter(x => x !== i) : [...v, i]);
+
+  const mergedData = useMemo(() => {
+    if (!survivalCurves?.length || !survivalCurves[0].data?.length) return [];
+    return survivalCurves[0].data.map((_, idx) => {
+      const day   = survivalCurves[0].data[idx].day;
+      const point = { day };
+      survivalCurves.forEach(sc => {
+        const s = sc.data[idx]?.survival ?? 0;
+        point[`seg${sc.cluster}`]    = s;
+        point[`seg${sc.cluster}_hi`] = Math.min(1, +(s + 0.05 * Math.sqrt(s * (1 - s + 0.01))).toFixed(4));
+        point[`seg${sc.cluster}_lo`] = Math.max(0, +(s - 0.05 * Math.sqrt(s * (1 - s + 0.01))).toFixed(4));
+      });
+      return point;
+    });
+  }, [survivalCurves]);
 
   return (
     <div className="max-w-[1200px] mx-auto space-y-5 animate-fade-in">
@@ -172,7 +180,7 @@ export default function SurvivalAnalysis() {
                     {med > 180 ? 'Majority never dropout' : '50% discontinued by this day'}
                   </div>
                 </div>
-                <Sparkline cluster={sc.cluster} color={sc.color} />
+                <Sparkline cluster={sc.cluster} color={sc.color} curves={survivalCurves} />
               </div>
               <div className="mt-3 text-xs text-gray-500">
                 n={[1902, 2104, 2383, 1177][sc.cluster].toLocaleString()} · {(sc.adherence * 100).toFixed(0)}% adherent

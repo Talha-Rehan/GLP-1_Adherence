@@ -1,0 +1,33 @@
+# Python
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+*.egg-info/
+
+# Virtual environments
+venv/
+.venv/
+env/
+Backend/venv/
+
+# Environment files
+.env
+.env.local
+
+# Data files (large / generated)
+Backend/data/*.csv
+Backend/data/*.npy
+Backend/data/*.pkl
+
+# Node / Frontend
+node_modules/
+dist/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

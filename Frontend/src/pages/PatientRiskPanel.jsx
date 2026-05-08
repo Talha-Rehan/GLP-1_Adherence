@@ -2,7 +2,8 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Filter, ChevronLeft, ChevronRight, DollarSign, ChevronUp, ChevronDown, Settings2, X, Eye, EyeOff } from 'lucide-react';
 import { SegmentDot } from '../components/shared';
-import { patients, SEGMENT_SHORT, SEGMENT_COLORS } from '../data/mockData';
+import { SEGMENT_SHORT, SEGMENT_COLORS } from '../data/mockData';
+import { usePatients } from '../hooks/usePatients';
 
 const PAGE_SIZE = 20;
 const MOLECULES = ['All', 'SEMAGLUTIDE', 'TIRZEPATIDE', 'LIRAGLUTIDE', 'DULAGLUTIDE'];
@@ -180,6 +181,7 @@ function SortHeader({ label, sortKey: sk, currentSort, currentDir, onSort }) {
 /* ── Main Component ───────────────────────────────────────────────── */
 export default function PatientRiskPanel() {
   const navigate = useNavigate();
+  const { patients } = usePatients();
   const [search, setSearch]           = useState('');
   const [segFilter, setSegFilter]     = useState('All');
   const [molFilter, setMolFilter]     = useState('All');

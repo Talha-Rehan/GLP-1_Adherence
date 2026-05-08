@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Activity, Database, AlertTriangle, ChevronDown, ChevronUp, Stethoscope, Building2 } from 'lucide-react';
-import { modelInfo, dataSources } from '../data/mockData';
+import { dataSources } from '../data/mockData';
+import { useModelInfo } from '../hooks/useModelInfo';
 import { ProgressBar } from '../components/shared';
 import { useRole } from '../context/RoleContext';
 
@@ -48,16 +49,17 @@ function Collapsible({ title, children }) {
   );
 }
 
-const PERF_METRICS = [
-  ['Accuracy',  modelInfo.accuracy,  'Primary classification accuracy on held-out test set'],
-  ['Precision', modelInfo.precision, 'True positive rate among all predicted positives'],
-  ['Recall',    modelInfo.recall,    'Fraction of true dropout patients correctly identified'],
-  ['F1 Score',  modelInfo.f1,        'Harmonic mean of precision and recall'],
-  ['AUC-ROC',   modelInfo.auc,       'Discrimination ability across all thresholds'],
-];
-
 export default function Settings() {
   const { role, setRole } = useRole();
+  const { data: modelInfo } = useModelInfo();
+
+  const PERF_METRICS = [
+    ['Accuracy',  modelInfo.accuracy,  'Primary classification accuracy on held-out test set'],
+    ['Precision', modelInfo.precision, 'True positive rate among all predicted positives'],
+    ['Recall',    modelInfo.recall,    'Fraction of true dropout patients correctly identified'],
+    ['F1 Score',  modelInfo.f1,        'Harmonic mean of precision and recall'],
+    ['AUC-ROC',   modelInfo.auc,       'Discrimination ability across all thresholds'],
+  ];
 
   return (
     <div className="max-w-[900px] mx-auto space-y-6 animate-fade-in">

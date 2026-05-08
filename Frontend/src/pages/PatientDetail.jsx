@@ -2,7 +2,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, AlertTriangle, CheckCircle, TrendingUp, TrendingDown, Heart, DollarSign, Pill, Activity, Shield } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from 'recharts';
 import { SegmentDot } from '../components/shared';
-import { patients, survivalCurves, survivalCheckpoints, SEGMENT_COLORS, SEGMENT_LABELS } from '../data/mockData';
+import { SEGMENT_COLORS, SEGMENT_LABELS } from '../data/mockData';
+import { usePatient } from '../hooks/usePatient';
+import { useSurvival } from '../hooks/useSurvival';
 
 // ── Plain-language interpretations keyed by driver label ──────────────────────
 const INTERPRETATIONS = {
@@ -135,10 +137,16 @@ function DriverCard({ rank, driver, direction, shap }) {
 export default function PatientDetail() {
   const { id }   = useParams();
   const navigate = useNavigate();
-  const patient  = patients.find(p => p.patient_idx === +id) ?? patients[0];
+  const { data: patientData } = usePatient(id);
+  const { data: survivalData } = useSurvival();
+
+  const patient   = patientData.patient;
+  const survivalCurves = survivalData.curves;
+  const survivalCheckpoints = survivalData.checkpoints;
+
   const segColor = SEGMENT_COLORS[patient.cluster];
   const rec      = RECOMMENDATIONS[patient.driver_1] ?? RECOMMENDATIONS['Blood sugar control (HbA1c)'];
-  const checkpoint = survivalCheckpoints[patient.cluster];
+  const checkpoint = patientData.segment_survival ?? survivalCheckpoints[patient.cluster] ?? survivalCheckpoints[0];
   const pct = Math.round(patient.dropout_prob * 100);
   const riskColor = getRiskColor(pct);
   const riskLabel = getRiskLabel(pct);

@@ -22,7 +22,13 @@ def build_patients_cache() -> None:
         _patients_df = None
         return
 
-    if df_shap is not None and "patient_idx" in df_main.columns and "patient_idx" in df_shap.columns:
+    # Ensure patient_idx exists; if not, use the DataFrame row index
+    if "patient_idx" not in df_main.columns:
+        df_main = df_main.reset_index(drop=True)
+        df_main = df_main.copy()
+        df_main.insert(0, "patient_idx", df_main.index)
+
+    if df_shap is not None and "patient_idx" in df_shap.columns:
         _patients_df = df_main.merge(df_shap, on="patient_idx", how="left", suffixes=("", "_shap"))
     else:
         _patients_df = df_main.copy()
@@ -44,7 +50,7 @@ def _row_to_dict(row: pd.Series) -> dict:
     cluster = int(_safe("cluster", 0))
     return {
         "patient_idx":          int(_safe("patient_idx", 0)),
-        "dropout_prob":         round(float(_safe("dropout_prob", 0.5)), 4),
+        "dropout_prob":         round(float(_safe("dropout_prob", _safe("dropout_proba", 0.5))), 4),
         "prediction":           str(_safe("prediction", "Unknown")),
         "cluster":              cluster,
         "segment":              model.SEGMENT_SHORT[cluster] if cluster < 4 else "Unknown",

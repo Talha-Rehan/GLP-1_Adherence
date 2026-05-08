@@ -170,8 +170,9 @@ def _build_segments() -> List[Dict]:
                     seg[out_key] = None if (hasattr(val, "__float__") and np.isnan(float(val))) else val
             # Ensure required fields
             i = int(seg.get("cluster", 0))
-            seg.setdefault("label", SEGMENT_LABELS[i])
-            seg.setdefault("short", SEGMENT_SHORT[i])
+            seg.setdefault("label", SEGMENT_LABELS[i] if i < len(SEGMENT_LABELS) else f"Segment {i}")
+            seg.setdefault("short", SEGMENT_SHORT[i] if i < len(SEGMENT_SHORT) else f"Segment {i}")
+            seg.setdefault("adherence", _SEGMENT_FALLBACK[i]["adherence"] if i < len(_SEGMENT_FALLBACK) else 0.5)
             results.append(seg)
         return results
 
@@ -241,8 +242,12 @@ def _build_survival() -> Dict:
 
 
 def _fit_km_curves() -> List[Dict]:
+    _DEFAULT_ADH = [0.208, 0.309, 0.854, 0.406]
     df = loader.df_main
-    adherence_rates = [seg["adherence"] for seg in (_build_segments() if segments_cache is None else segments_cache)]
+    segs = _build_segments() if segments_cache is None else segments_cache
+    adh_by_cluster = {int(s.get("cluster", i)): s.get("adherence", _DEFAULT_ADH[i] if i < len(_DEFAULT_ADH) else 0.5)
+                      for i, s in enumerate(segs)}
+    adherence_rates = [adh_by_cluster.get(i, _DEFAULT_ADH[i]) for i in range(4)]
 
     if df is not None and all(c in df.columns for c in ["cluster", "time_to_dropout", "event_occurred"]):
         try:
@@ -290,16 +295,34 @@ def _load_checkpoints() -> Optional[List[Dict]]:
     df = loader.df_survival
     if df is None:
         return None
+
+    # Build segment-name → cluster index lookup
+    seg_to_cluster = {label.lower(): i for i, label in enumerate(SEGMENT_LABELS)}
+    seg_to_cluster.update({short.lower(): i for i, short in enumerate(SEGMENT_SHORT)})
+
+    def _get_day(row, *keys):
+        for k in keys:
+            if k in row and row[k] is not None:
+                try:
+                    v = float(row[k])
+                    if not np.isnan(v):
+                        return round(v, 4)
+                except (ValueError, TypeError):
+                    pass
+        return 0.0
+
     rows = []
     for _, row in df.iterrows():
-        cluster = int(row.get("cluster", row.get("cluster_id", 0)))
+        seg_name = str(row.get("segment", ""))
+        cluster = int(row.get("cluster", row.get("cluster_id",
+                    seg_to_cluster.get(seg_name.lower(), 0))))
         rows.append({
-            "segment": str(row.get("segment", SEGMENT_LABELS[cluster])),
+            "segment": seg_name or SEGMENT_LABELS[cluster],
             "cluster": cluster,
-            "day30":   round(float(row.get("day30", 0)), 4),
-            "day60":   round(float(row.get("day60", 0)), 4),
-            "day90":   round(float(row.get("day90", 0)), 4),
-            "day180":  round(float(row.get("day180", 0)), 4),
+            "day30":  _get_day(row, "day30",  "day_30"),
+            "day60":  _get_day(row, "day60",  "day_60"),
+            "day90":  _get_day(row, "day90",  "day_90"),
+            "day180": _get_day(row, "day180", "day_180"),
         })
     return rows
 

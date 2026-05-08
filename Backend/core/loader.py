@@ -69,6 +69,11 @@ def load_all() -> None:
         print(f"  ✅  final_gb_model — threshold: {threshold}")
     except FileNotFoundError:
         print("  ⚠️   final_gb_model.pkl not found — model info will use defaults")
+    except (ModuleNotFoundError, ImportError) as exc:
+        print(f"  ⚠️   final_gb_model.pkl: scikit-learn version mismatch ({exc})")
+        print("       Fix: retrain the model in Model/model.ipynb with your current sklearn,")
+        print("       or pin scikit-learn in requirements.txt to the version used for training.")
+        print("       All CSV-based endpoints are unaffected.")
     except Exception as exc:
         print(f"  ❌  final_gb_model.pkl failed: {exc}")
 

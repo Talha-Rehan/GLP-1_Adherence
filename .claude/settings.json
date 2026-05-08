@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npx vite *)"
+      "Bash(npx vite *)",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\Talha\\\\Desktop\\\\Work\\\\GLP-1_Adherence\" -Recurse -Force)",
+      "Bash(Select-Object FullName)"
     ]
   }
 }

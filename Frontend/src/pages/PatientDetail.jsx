@@ -103,16 +103,17 @@ function DriverCard({ rank, driver, direction, shap }) {
   const barWidth = Math.min(100, (Math.abs(shap ?? 0) / 0.5) * 100);
 
   return (
-    <div className="rounded-xl p-4 transition-all" style={{ background: bgColor, border: `1px solid ${color}18` }}>
-      <div className="flex items-start justify-between gap-3 mb-3">
+    <div className="rounded-xl p-5 transition-all flex flex-col justify-between h-full"
+         style={{ background: bgColor, border: `1px solid ${color}18` }}>
+      <div className="flex items-start justify-between gap-3 mb-4">
         <div className="flex items-start gap-3">
-          <span className="text-xs font-bold rounded-full w-7 h-7 flex items-center justify-center flex-shrink-0 bg-white shadow-sm"
+          <span className="text-xs font-bold rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0 bg-white shadow-sm"
                 style={{ color }}>
             {rank}
           </span>
           <div>
             <div className="text-sm font-medium text-gray-800 leading-snug">{driver}</div>
-            <div className="text-xs mt-1 font-medium flex items-center gap-1" style={{ color }}>
+            <div className="text-xs mt-1.5 font-medium flex items-center gap-1" style={{ color }}>
               {isRisk ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
               {isRisk ? 'Increasing risk' : 'Reducing risk'}
             </div>
@@ -122,7 +123,7 @@ function DriverCard({ rank, driver, direction, shap }) {
           SHAP: {Math.abs(shap ?? 0).toFixed(3)}
         </span>
       </div>
-      <div className="h-2 rounded-full overflow-hidden bg-white">
+      <div className="h-2.5 rounded-full overflow-hidden bg-white">
         <div className="h-full rounded-full transition-all duration-700"
              style={{ width: `${barWidth}%`, background: color }} />
       </div>
@@ -216,11 +217,11 @@ export default function PatientDetail() {
         </div>
       </div>
 
-      {/* ── Main content grid ────────────────────────────────────── */}
-      <div className="detail-content-grid">
+      {/* ── Top 2-col grid: profile/financial/rec  |  drivers ──────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
 
-        {/* ── Left column ────────────────────────────────────────── */}
-        <div className="detail-left-col">
+        {/* Left: Clinical Profile + Financial & Medication + Recommended Action */}
+        <div className="flex flex-col gap-6">
 
           {/* Clinical Profile */}
           <div className="card p-6">
@@ -239,7 +240,7 @@ export default function PatientDetail() {
             </div>
           </div>
 
-          {/* Financial & Drug */}
+          {/* Financial & Medication */}
           <div className="card p-6">
             <h2 className="text-base font-semibold text-gray-800 mb-5" style={{ fontFamily: 'DM Serif Display, serif' }}>
               Financial & Medication
@@ -274,107 +275,110 @@ export default function PatientDetail() {
           </div>
         </div>
 
-        {/* ── Right column ───────────────────────────────────────── */}
-        <div className="detail-right-col">
-
-          {/* Dropout Drivers */}
-          <div className="card p-6">
-            <h2 className="text-base font-semibold text-gray-800 mb-2" style={{ fontFamily: 'DM Serif Display, serif' }}>
-              Top Dropout Drivers
-            </h2>
-            <p className="text-xs text-gray-400 mb-5">
-              SHAP-based attribution for this patient's predicted dropout probability
-            </p>
-            <div className="space-y-3">
-              {[
-                { driver: patient.driver_1, direction: patient.driver_1_direction, shap: patient.driver_1_shap },
-                { driver: patient.driver_2, direction: patient.driver_2_direction, shap: patient.driver_2_shap },
-                { driver: patient.driver_3, direction: patient.driver_3_direction, shap: patient.driver_3_shap },
-              ].map((d, i) => (
-                <DriverCard key={i} rank={i + 1} {...d} />
-              ))}
-            </div>
-
-            {/* Interpretation callout */}
-            <div className="mt-5 p-4 rounded-xl" style={{ background: '#F7FAFC', border: '1px solid #E2E8F0' }}>
-              <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                Why is this patient flagged?
+        {/* Right: Top Dropout Drivers */}
+        <div className="card p-6 h-full flex flex-col">
+          <h2 className="text-base font-semibold text-gray-800 mb-2" style={{ fontFamily: 'DM Serif Display, serif' }}>
+            Top Dropout Drivers
+          </h2>
+          <p className="text-xs text-gray-400 mb-5">
+            SHAP-based attribution for this patient's predicted dropout probability
+          </p>
+          <div className="flex flex-col flex-1 gap-3">
+            {[
+              { driver: patient.driver_1, direction: patient.driver_1_direction, shap: patient.driver_1_shap },
+              { driver: patient.driver_2, direction: patient.driver_2_direction, shap: patient.driver_2_shap },
+              { driver: patient.driver_3, direction: patient.driver_3_direction, shap: patient.driver_3_shap },
+            ].map((d, i) => (
+              <div key={i} className="flex-1 flex flex-col">
+                <DriverCard rank={i + 1} {...d} />
               </div>
-              <p className="text-sm text-gray-600 leading-relaxed">
-                {INTERPRETATIONS[patient.driver_1] ??
-                  'Multiple clinical and financial factors are contributing to elevated dropout risk.'}
-              </p>
-            </div>
+            ))}
           </div>
 
-          {/* Survival Curve */}
-          <div className="card p-6">
-            <h2 className="text-base font-semibold text-gray-800 mb-2" style={{ fontFamily: 'DM Serif Display, serif' }}>
-              Segment Survival Curve
-            </h2>
-            <p className="text-xs text-gray-400 mb-4">
-              Highlighted: <span style={{ color: segColor, fontWeight: 600 }}>
-                {SEGMENT_LABELS[patient.cluster].split(' ').slice(0, 3).join(' ')}
-              </span>
+          {/* Interpretation callout */}
+          <div className="mt-5 p-4 rounded-xl" style={{ background: '#F7FAFC', border: '1px solid #E2E8F0' }}>
+            <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+              Why is this patient flagged?
+            </div>
+            <p className="text-sm text-gray-600 leading-relaxed">
+              {INTERPRETATIONS[patient.driver_1] ??
+                'Multiple clinical and financial factors are contributing to elevated dropout risk.'}
             </p>
-            <ResponsiveContainer width="100%" height={200}>
-              <LineChart margin={{ top: 4, right: 12, bottom: 4, left: -10 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#EDF2F7" />
-                <XAxis dataKey="day" type="number" domain={[0, 180]}
-                  ticks={[0, 30, 60, 90, 180]} tick={{ fontSize: 11, fill: '#718096' }}
-                  axisLine={{ stroke: '#E2E8F0' }} tickLine={false} />
-                <YAxis domain={[0, 1]} tickFormatter={v => `${Math.round(v * 100)}%`}
-                  tick={{ fontSize: 11, fill: '#718096' }} axisLine={false} tickLine={false} />
-                <Tooltip formatter={v => `${(v * 100).toFixed(0)}%`}
-                  labelFormatter={v => `Day ${v}`} />
-                {miniKM.map(sc => (
-                  <Line key={sc.cluster} data={sc.data} dataKey="survival" dot={false}
-                    stroke={sc.highlighted ? SEGMENT_COLORS[sc.cluster] : '#E2E8F0'}
-                    strokeWidth={sc.highlighted ? 3 : 1}
-                    name={sc.label} />
-                ))}
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* Dropout Checkpoints */}
-          <div className="card p-6">
-            <h2 className="text-base font-semibold text-gray-800 mb-5" style={{ fontFamily: 'DM Serif Display, serif' }}>
-              Segment Dropout Checkpoints
-            </h2>
-            <div className="space-y-4">
-              {[
-                ['Day 30',  checkpoint.day30],
-                ['Day 60',  checkpoint.day60],
-                ['Day 90',  checkpoint.day90],
-                ['Day 180', checkpoint.day180],
-              ].map(([day, rate]) => {
-                const p = rate * 100;
-                const barColor = p >= 60 ? '#EF5350' : p >= 35 ? '#FF7043' : '#43A047';
-                return (
-                  <div key={day}>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-sm font-medium text-gray-600">{day}</span>
-                      <span className="text-sm font-bold font-mono" style={{ color: barColor }}>
-                        {p.toFixed(1)}%
-                      </span>
-                    </div>
-                    <div className="h-2.5 rounded-full overflow-hidden" style={{ background: '#EDF2F7' }}>
-                      <div className="h-full rounded-full transition-all duration-700"
-                           style={{ width: `${p}%`, background: barColor }} />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="mt-5 p-4 rounded-xl text-sm text-gray-600 leading-relaxed"
-                 style={{ background: '#F7FAFC', border: '1px solid #E2E8F0' }}>
-              In the <b>{SEGMENT_LABELS[patient.cluster]}</b> segment,{' '}
-              {Math.round(checkpoint.day90 * 100)}% of patients discontinue by day 90.
-            </div>
           </div>
         </div>
+      </div>
+
+      {/* ── Full-width bottom row: Survival Curve | Dropout Checkpoints ── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        {/* Survival Curve */}
+        <div className="card p-6">
+          <h2 className="text-base font-semibold text-gray-800 mb-2" style={{ fontFamily: 'DM Serif Display, serif' }}>
+            Segment Survival Curve
+          </h2>
+          <p className="text-xs text-gray-400 mb-4">
+            Highlighted: <span style={{ color: segColor, fontWeight: 600 }}>
+              {SEGMENT_LABELS[patient.cluster].split(' ').slice(0, 3).join(' ')}
+            </span>
+          </p>
+          <ResponsiveContainer width="100%" height={220}>
+            <LineChart margin={{ top: 4, right: 12, bottom: 4, left: -10 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#EDF2F7" />
+              <XAxis dataKey="day" type="number" domain={[0, 180]}
+                ticks={[0, 30, 60, 90, 180]} tick={{ fontSize: 11, fill: '#718096' }}
+                axisLine={{ stroke: '#E2E8F0' }} tickLine={false} />
+              <YAxis domain={[0, 1]} tickFormatter={v => `${Math.round(v * 100)}%`}
+                tick={{ fontSize: 11, fill: '#718096' }} axisLine={false} tickLine={false} />
+              <Tooltip formatter={v => `${(v * 100).toFixed(0)}%`}
+                labelFormatter={v => `Day ${v}`} />
+              {miniKM.map(sc => (
+                <Line key={sc.cluster} data={sc.data} dataKey="survival" dot={false}
+                  stroke={sc.highlighted ? SEGMENT_COLORS[sc.cluster] : '#E2E8F0'}
+                  strokeWidth={sc.highlighted ? 3 : 1}
+                  name={sc.label} />
+              ))}
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Dropout Checkpoints */}
+        <div className="card p-6">
+          <h2 className="text-base font-semibold text-gray-800 mb-5" style={{ fontFamily: 'DM Serif Display, serif' }}>
+            Segment Dropout Checkpoints
+          </h2>
+          <div className="space-y-4">
+            {[
+              ['Day 30',  checkpoint.day30],
+              ['Day 60',  checkpoint.day60],
+              ['Day 90',  checkpoint.day90],
+              ['Day 180', checkpoint.day180],
+            ].map(([day, rate]) => {
+              const p = rate * 100;
+              const barColor = p >= 60 ? '#EF5350' : p >= 35 ? '#FF7043' : '#43A047';
+              return (
+                <div key={day}>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-sm font-medium text-gray-600">{day}</span>
+                    <span className="text-sm font-bold font-mono" style={{ color: barColor }}>
+                      {p.toFixed(1)}%
+                    </span>
+                  </div>
+                  <div className="h-2.5 rounded-full overflow-hidden" style={{ background: '#EDF2F7' }}>
+                    <div className="h-full rounded-full transition-all duration-700"
+                         style={{ width: `${p}%`, background: barColor }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="mt-5 p-4 rounded-xl text-sm text-gray-600 leading-relaxed"
+               style={{ background: '#F7FAFC', border: '1px solid #E2E8F0' }}>
+            In the <b>{SEGMENT_LABELS[patient.cluster]}</b> segment,{' '}
+            {Math.round(checkpoint.day90 * 100)}% of patients discontinue by day 90.
+          </div>
+        </div>
+
       </div>
     </div>
   );

@@ -3,14 +3,18 @@ import {
   ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip,
   ReferenceLine, ResponsiveContainer, BarChart, Bar, Cell,
 } from 'recharts';
+import { Link } from 'react-router-dom';
+import { Stethoscope } from 'lucide-react';
 import { SectionHeader } from '../components/shared';
 import { SEGMENT_COLORS, SEGMENT_SHORT, SEGMENT_LABELS } from '../data/mockData';
 import { useCostEffectiveness } from '../hooks/useCostEffectiveness';
 import { useSegments } from '../hooks/useSegments';
+import { useRole } from '../context/RoleContext';
 
 const ICER_THRESHOLD = 50000;
 
 export default function CostEffectiveness() {
+  const { isInsurer }      = useRole();
   const { data: costData } = useCostEffectiveness();
   const { segments }       = useSegments();
   const ceaData  = costData.cea;
@@ -58,7 +62,21 @@ export default function CostEffectiveness() {
   const avgCost    = ceaData.reduce((a, s) => a + s.annual_cost, 0) / ceaData.length;
 
   return (
-    <div className="max-w-[1280px] mx-auto animate-fade-in">
+    <div className="max-w-[1280px] mx-auto animate-fade-in space-y-5">
+      {!isInsurer && (
+        <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl text-sm font-medium animate-fade-up"
+          style={{ background: '#F0FFF4', color: '#2E7D32', border: '1px solid #C8E6C9' }}>
+          <span className="flex items-center gap-2.5">
+            <Stethoscope size={15} />
+            Clinician View — This financial analysis is primarily for Insurer/Payer use. All data is available for reference.
+          </span>
+          <div className="flex items-center gap-3 text-xs font-semibold flex-shrink-0">
+            <Link to="/patients" className="hover:underline underline-offset-2" style={{ color: '#2E7D32' }}>Patient Risk Panel →</Link>
+            <Link to="/"         className="hover:underline underline-offset-2" style={{ color: '#2E7D32' }}>Executive Summary →</Link>
+          </div>
+        </div>
+      )}
+
       <div className="flex gap-5 items-start">
 
         {/* ── Controls sidebar (35%) ──────────────────────────── */}

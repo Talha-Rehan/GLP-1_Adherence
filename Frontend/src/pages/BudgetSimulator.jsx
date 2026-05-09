@@ -3,10 +3,12 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ReferenceLine, ResponsiveContainer,
 } from 'recharts';
+import { Link } from 'react-router-dom';
 import { SectionHeader } from '../components/shared';
 import { calcBudgetImpact, SEGMENT_COLORS, SEGMENT_SHORT } from '../data/mockData';
 import { useBudgetImpact } from '../hooks/useBudgetImpact';
-import { TrendingDown, DollarSign, CheckCircle, XCircle, Download } from 'lucide-react';
+import { TrendingDown, DollarSign, CheckCircle, XCircle, Download, Stethoscope } from 'lucide-react';
+import { useRole } from '../context/RoleContext';
 
 function ScenarioSlider({ label, sub, value, min, max, step, onChange, format }) {
   return (
@@ -35,6 +37,7 @@ const fmtMoney = n =>
   `$${n}`;
 
 export default function BudgetSimulator() {
+  const { isInsurer } = useRole();
   const [dropoutReduction, setDropoutReduction] = useState(15);
   const [interventionCost, setInterventionCost] = useState(500);
   const [scope, setScope]                       = useState(100);
@@ -100,6 +103,21 @@ export default function BudgetSimulator() {
 
   return (
     <div className="max-w-[1200px] mx-auto space-y-5 animate-fade-in">
+
+      {/* ── Clinician context banner ─────────────────────────────── */}
+      {!isInsurer && (
+        <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl text-sm font-medium animate-fade-up"
+          style={{ background: '#F0FFF4', color: '#2E7D32', border: '1px solid #C8E6C9' }}>
+          <span className="flex items-center gap-2.5">
+            <Stethoscope size={15} />
+            Clinician View — This simulator is designed for Insurer/Payer financial planning. All tools remain accessible.
+          </span>
+          <div className="flex items-center gap-3 text-xs font-semibold flex-shrink-0">
+            <Link to="/patients" className="hover:underline underline-offset-2" style={{ color: '#2E7D32' }}>Patient Risk Panel →</Link>
+            <Link to="/"         className="hover:underline underline-offset-2" style={{ color: '#2E7D32' }}>Executive Summary →</Link>
+          </div>
+        </div>
+      )}
 
       {/* ── Sliders ────────────────────────────────────────────── */}
       <div className="card p-6">

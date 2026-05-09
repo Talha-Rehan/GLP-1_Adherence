@@ -8,14 +8,41 @@ import {
 } from 'lucide-react';
 
 const NAV_ITEMS = [
-  { to: '/',                icon: LayoutDashboard, label: 'Executive Summary'       },
-  { to: '/patients',        icon: Users,            label: 'Patient Risk Panel'      },
-  { to: '/segments',        icon: PieChart,         label: 'Segment Explorer'        },
-  { to: '/survival',        icon: TrendingDown,     label: 'Survival Analysis'       },
-  { to: '/cost',            icon: DollarSign,       label: 'Cost-Effectiveness'      },
-  { to: '/budget',          icon: Calculator,       label: 'Budget Simulator'        },
-  { to: '/settings',        icon: Settings,         label: 'Settings & Data Info'    },
+  { to: '/',         icon: LayoutDashboard, label: 'Executive Summary',    primary: null },
+  { to: '/patients', icon: Users,           label: 'Patient Risk Panel',   primary: 'clinician' },
+  { to: '/segments', icon: PieChart,        label: 'Segment Explorer',     primary: null },
+  { to: '/survival', icon: TrendingDown,    label: 'Survival Analysis',    primary: null },
+  { to: '/cost',     icon: DollarSign,      label: 'Cost-Effectiveness',   primary: 'insurer' },
+  { to: '/budget',   icon: Calculator,      label: 'Budget Simulator',     primary: 'insurer' },
+  { to: '/settings', icon: Settings,        label: 'Settings & Data Info', primary: null },
 ];
+
+function NavItem({ item, collapsed, isInsurer, extra = {} }) {
+  const { to, icon: Icon, label, primary } = item;
+  const mismatch = primary && (
+    (primary === 'insurer'   && !isInsurer) ||
+    (primary === 'clinician' &&  isInsurer)
+  );
+  const badgeLabel = primary === 'insurer' ? 'Insurer' : 'Clinician';
+  const badgeColor = primary === 'insurer' ? '#2E6DB4' : '#2E7D32';
+  return (
+    <NavLink
+      key={to} to={to} {...extra}
+      className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+      title={collapsed ? label : undefined}
+      style={{ opacity: mismatch ? 0.5 : 1 }}
+    >
+      <Icon size={17} className="nav-icon flex-shrink-0" />
+      {!collapsed && <span className="animate-fade-in truncate flex-1">{label}</span>}
+      {!collapsed && mismatch && (
+        <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ml-1"
+              style={{ background: `${badgeColor}28`, color: `${badgeColor}cc` }}>
+          {badgeLabel}
+        </span>
+      )}
+    </NavLink>
+  );
+}
 
 export default function AppShell({ children }) {
   const [collapsed, setCollapsed] = useState(false);
@@ -80,22 +107,15 @@ export default function AppShell({ children }) {
         <nav className="flex-1 overflow-y-auto px-2 py-2 space-y-0.5">
           {/* Section: Overview */}
           {!collapsed && <div className="text-[10px] text-white/25 uppercase tracking-widest px-3 pt-3 pb-1">Overview</div>}
-          {NAV_ITEMS.slice(0, 2).map(({ to, icon: Icon, label }) => (
-            <NavLink key={to} to={to} end={to === '/'} className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-              title={collapsed ? label : undefined}>
-              <Icon size={17} className="nav-icon flex-shrink-0" />
-              {!collapsed && <span className="animate-fade-in truncate">{label}</span>}
-            </NavLink>
+          {NAV_ITEMS.slice(0, 2).map(item => (
+            <NavItem key={item.to} item={item} collapsed={collapsed} isInsurer={isInsurer}
+              extra={item.to === '/' ? { end: true } : {}} />
           ))}
 
           {/* Section: Analytics */}
           {!collapsed && <div className="text-[10px] text-white/25 uppercase tracking-widest px-3 pt-4 pb-1">Analytics</div>}
-          {NAV_ITEMS.slice(2, 5).map(({ to, icon: Icon, label }) => (
-            <NavLink key={to} to={to} className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-              title={collapsed ? label : undefined}>
-              <Icon size={17} className="nav-icon flex-shrink-0" />
-              {!collapsed && <span className="animate-fade-in truncate">{label}</span>}
-            </NavLink>
+          {NAV_ITEMS.slice(2, 5).map(item => (
+            <NavItem key={item.to} item={item} collapsed={collapsed} isInsurer={isInsurer} />
           ))}
 
           {/* Section: Finance — insurer gets badge */}
@@ -105,12 +125,8 @@ export default function AppShell({ children }) {
               {isInsurer && <div className="text-[9px] bg-blue-500/30 text-blue-300 px-1.5 py-0.5 rounded-full">Primary</div>}
             </div>
           )}
-          {NAV_ITEMS.slice(5, 7).map(({ to, icon: Icon, label }) => (
-            <NavLink key={to} to={to} className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-              title={collapsed ? label : undefined}>
-              <Icon size={17} className="nav-icon flex-shrink-0" />
-              {!collapsed && <span className="animate-fade-in truncate">{label}</span>}
-            </NavLink>
+          {NAV_ITEMS.slice(5, 6).map(item => (
+            <NavItem key={item.to} item={item} collapsed={collapsed} isInsurer={isInsurer} />
           ))}
 
           {/* Settings */}

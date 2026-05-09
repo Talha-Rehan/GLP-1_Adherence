@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { RoleProvider } from './context/RoleContext';
 import AppShell from './components/layout/AppShell';
+import LoadingScreen from './components/shared/LoadingScreen';
+import { useAppLoader } from './hooks/useAppLoader';
 import ExecutiveSummary from './pages/ExecutiveSummary';
 import PatientRiskPanel from './pages/PatientRiskPanel';
 import PatientDetail from './pages/PatientDetail';
@@ -11,6 +13,12 @@ import BudgetSimulator from './pages/BudgetSimulator';
 import Settings from './pages/Settings';
 
 export default function App() {
+  const { ready, progress, status } = useAppLoader();
+
+  if (!ready) {
+    return <LoadingScreen progress={progress} status={status} />;
+  }
+
   return (
     <RoleProvider>
       <BrowserRouter>

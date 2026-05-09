@@ -1,10 +1,11 @@
-import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, AlertTriangle, CheckCircle, TrendingUp, TrendingDown, Heart, DollarSign, Pill, Activity, Shield } from 'lucide-react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { ArrowLeft, AlertTriangle, CheckCircle, TrendingUp, TrendingDown, Heart, DollarSign, Pill, Activity, Shield, Building2 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from 'recharts';
 import { SegmentDot } from '../components/shared';
 import { SEGMENT_COLORS, SEGMENT_LABELS } from '../data/mockData';
 import { usePatient } from '../hooks/usePatient';
 import { useSurvival } from '../hooks/useSurvival';
+import { useRole } from '../context/RoleContext';
 
 // ── Plain-language interpretations keyed by driver label ──────────────────────
 const INTERPRETATIONS = {
@@ -137,6 +138,7 @@ function DriverCard({ rank, driver, direction, shap }) {
 export default function PatientDetail() {
   const { id }   = useParams();
   const navigate = useNavigate();
+  const { isInsurer } = useRole();
   const { data: patientData } = usePatient(id);
   const { data: survivalData } = useSurvival();
 
@@ -170,9 +172,24 @@ export default function PatientDetail() {
 
       {/* ── Back button ──────────────────────────────────────────── */}
       <button onClick={() => navigate(-1)}
-        className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-700 mb-6 transition-colors font-medium">
+        className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-700 mb-4 transition-colors font-medium">
         <ArrowLeft size={16} /> Back to Patient Risk Panel
       </button>
+
+      {/* ── Insurer context banner ───────────────────────────────── */}
+      {isInsurer && (
+        <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl text-sm font-medium mb-5 animate-fade-up"
+          style={{ background: '#EBF4FF', color: '#1B4F8A', border: '1px solid #BFDBFE' }}>
+          <span className="flex items-center gap-2.5">
+            <Building2 size={15} />
+            Insurer View — Individual patient detail is a Case Manager tool. Population-level analysis is in the financial screens.
+          </span>
+          <div className="flex items-center gap-3 text-xs font-semibold flex-shrink-0">
+            <Link to="/cost"   className="hover:underline underline-offset-2" style={{ color: '#1B4F8A' }}>Cost-Effectiveness →</Link>
+            <Link to="/budget" className="hover:underline underline-offset-2" style={{ color: '#1B4F8A' }}>Budget Simulator →</Link>
+          </div>
+        </div>
+      )}
 
       {/* ── Hero header ──────────────────────────────────────────── */}
       <div className="card p-6 md:p-8 mb-6">

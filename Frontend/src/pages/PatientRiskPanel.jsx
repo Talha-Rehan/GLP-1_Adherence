@@ -1,9 +1,10 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Search, Filter, ChevronLeft, ChevronRight, DollarSign, ChevronUp, ChevronDown, Settings2, X, Eye, EyeOff } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { Search, Filter, ChevronLeft, ChevronRight, DollarSign, ChevronUp, ChevronDown, Settings2, X, Eye, EyeOff, Building2 } from 'lucide-react';
 import { SegmentDot } from '../components/shared';
 import { SEGMENT_SHORT, SEGMENT_COLORS } from '../data/mockData';
 import { usePatients } from '../hooks/usePatients';
+import { useRole } from '../context/RoleContext';
 
 const PAGE_SIZE = 20;
 const MOLECULES = ['All', 'SEMAGLUTIDE', 'TIRZEPATIDE', 'LIRAGLUTIDE', 'DULAGLUTIDE'];
@@ -181,6 +182,7 @@ function SortHeader({ label, sortKey: sk, currentSort, currentDir, onSort }) {
 /* ── Main Component ───────────────────────────────────────────────── */
 export default function PatientRiskPanel() {
   const navigate = useNavigate();
+  const { isInsurer } = useRole();
   const { patients } = usePatients();
   const [search, setSearch]           = useState('');
   const [segFilter, setSegFilter]     = useState('All');
@@ -292,6 +294,21 @@ export default function PatientRiskPanel() {
 
   return (
     <div className="risk-panel-page animate-fade-in">
+      {/* ── Insurer context banner ───────────────────────────────── */}
+      {isInsurer && (
+        <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl text-sm font-medium mb-4 animate-fade-up"
+          style={{ background: '#EBF4FF', color: '#1B4F8A', border: '1px solid #BFDBFE' }}>
+          <span className="flex items-center gap-2.5">
+            <Building2 size={15} />
+            Insurer View — This panel is optimized for Case Managers. Individual patient data is available for reference.
+          </span>
+          <div className="flex items-center gap-3 text-xs font-semibold flex-shrink-0">
+            <Link to="/cost" className="hover:underline underline-offset-2" style={{ color: '#1B4F8A' }}>Cost-Effectiveness →</Link>
+            <Link to="/budget" className="hover:underline underline-offset-2" style={{ color: '#1B4F8A' }}>Budget Simulator →</Link>
+          </div>
+        </div>
+      )}
+
       {/* ── Top bar: title + search + settings ──────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <div>

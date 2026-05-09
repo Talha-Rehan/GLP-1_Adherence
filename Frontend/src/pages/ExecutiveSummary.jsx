@@ -1,5 +1,5 @@
 import { BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { Activity, DollarSign, Users, TrendingDown, AlertTriangle, BarChart2, ArrowRight } from 'lucide-react';
+import { Activity, DollarSign, Users, TrendingDown, AlertTriangle, BarChart2, ArrowRight, Bell } from 'lucide-react';
 import { KPICard, SectionHeader, ChartTooltip } from '../components/shared';
 import { SEGMENT_COLORS } from '../data/mockData';
 import { useRole } from '../context/RoleContext';
@@ -152,13 +152,32 @@ export default function ExecutiveSummary() {
   return (
     <div className="exec-summary-page">
       {isInsurer && (
-        <div
-          className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium animate-fade-up"
-          style={{ background: '#EBF4FF', color: '#1B4F8A', border: '1px solid #BFDBFE' }}
-        >
+        <div className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium animate-fade-up"
+          style={{ background: '#EBF4FF', color: '#1B4F8A', border: '1px solid #BFDBFE' }}>
           <AlertTriangle size={15} /> Insurer View — Financial metrics and ROI analysis are foregrounded
         </div>
       )}
+
+      {!isInsurer && (() => {
+        const dropouts = Math.round(
+          (summaryKPIs.dropoutRate ?? summaryKPIs.dropout_rate ?? 0) *
+          (summaryKPIs.totalPatients ?? summaryKPIs.total_patients ?? 0)
+        );
+        return dropouts > 0 ? (
+          <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl text-sm font-medium animate-fade-up"
+            style={{ background: '#FFEBEE', color: '#C62828', border: '1px solid #FFCDD2' }}>
+            <span className="flex items-center gap-2.5">
+              <Bell size={15} />
+              <b>{dropouts.toLocaleString()}</b> patients are currently non-adherent and at dropout risk.
+            </span>
+            <Link to="/patients"
+              className="flex items-center gap-1 text-xs font-semibold whitespace-nowrap underline-offset-2 hover:underline"
+              style={{ color: '#C62828' }}>
+              Review Patient Risk Panel <ArrowRight size={12} />
+            </Link>
+          </div>
+        ) : null;
+      })()}
 
       {/* ── Zone A — KPI Cards ─────────────────────────────────────────── */}
       <div className="exec-kpi-grid">
@@ -205,22 +224,97 @@ export default function ExecutiveSummary() {
 
       {/* ── Zone C — Dropout Timeline + Drivers / Wasted Spend ──────── */}
       <div className="exec-bottom-grid">
-        {/* Dropout windows */}
+        {/* Zone C left — role-based */}
         <div className="card p-5 animate-fade-up stagger-5">
-          <SectionHeader title="Dropout Volume by Time Window" sub="Estimated patients discontinuing at each checkpoint" />
-          <ResponsiveContainer width="100%" height={240}>
-            <BarChart data={dropoutByWindow} margin={{ top: 4, right: 16, bottom: 0, left: 0 }}>
-              <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#EDF2F7" />
-              <XAxis dataKey="window" tick={{ fontSize: 11, fill: '#718096' }} axisLine={{ stroke: '#E2E8F0' }} tickLine={false} />
-              <YAxis tick={{ fontSize: 11, fill: '#718096' }} axisLine={false} tickLine={false} />
-              <Tooltip content={<ChartTooltip />} />
-              <Bar dataKey="seg0" name="Low Urgency" fill={SEGMENT_COLORS[0]} stackId="a" />
-              <Bar dataKey="seg1" name="Financial Barrier" fill={SEGMENT_COLORS[1]} stackId="a" />
-              <Bar dataKey="seg2" name="Low Friction" fill={SEGMENT_COLORS[2]} stackId="a" />
-              <Bar dataKey="seg3" name="Moderate Risk" fill={SEGMENT_COLORS[3]} stackId="a" radius={[4,4,0,0]} />
-              <Legend iconType="circle" iconSize={8} formatter={v => <span style={{ fontSize: 10, color: '#718096' }}>{v}</span>} />
-            </BarChart>
-          </ResponsiveContainer>
+          {isInsurer ? (() => {
+            const avgCost = summaryKPIs.avgAnnualCost ?? summaryKPIs.avg_annual_cost ?? 10603;
+            const ranked = adherenceBySegment
+              .map(s => ({
+                name:      s.segment.split(' ').slice(0, 2).join(' '),
+                value:     Math.round(avgCost / Math.max(s.adherence, 0.01)),
+                color:     s.color,
+                n:         s.n,
+                adherence: s.adherence,
+              }))
+              .sort((a, b) => a.value - b.value);
+            const best  = ranked[0].value;
+            const worst = ranked[ranked.length - 1].value;
+            return (
+              <>
+                <SectionHeader
+                  title="Cost per Adherent Patient-Year"
+                  sub="Ranked by payer value — annual drug spend ÷ adherence rate" />
+                <div className="space-y-2 mt-1">
+                  {ranked.map((d, i) => {
+                    const isBest  = i === 0;
+                    const isWorst = i === ranked.length - 1;
+                    const tier =
+                      isBest  ? { label: 'Best value',     bg: '#F0FFF4', tint: '#E8F5E9' } :
+                      isWorst ? { label: 'Critical waste', bg: '#FFF8F8', tint: '#FFEBEE' } :
+                      i === 1 ? { label: 'Strong value',   bg: 'white',   tint: '#F7FAFC' } :
+                                { label: 'Inefficient',    bg: 'white',   tint: '#FFF3E0' };
+                    return (
+                      <div key={i}
+                        className="flex items-center justify-between rounded-xl px-3 py-2.5 transition-all"
+                        style={{
+                          background: tier.bg,
+                          border: `1px solid ${isBest ? '#C8E6C9' : isWorst ? '#FFCDD2' : '#E2E8F0'}`,
+                          borderLeft: `4px solid ${d.color}`,
+                        }}>
+                        <div className="flex items-center gap-3 min-w-0">
+                          <span className="font-display text-lg font-bold w-6 flex-shrink-0 text-center"
+                                style={{ color: isBest ? '#2E7D32' : isWorst ? '#C62828' : '#CBD5E0' }}>
+                            {i + 1}
+                          </span>
+                          <div className="min-w-0">
+                            <div className="text-sm font-semibold text-gray-800 leading-tight truncate">{d.name}</div>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
+                                    style={{ background: tier.tint, color: d.color }}>
+                                {tier.label}
+                              </span>
+                              <span className="text-[10px] text-gray-400">
+                                {Math.round(d.adherence * 100)}% adherent
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-right flex-shrink-0 ml-3">
+                          <div className="font-display text-xl font-bold leading-none" style={{ color: d.color }}>
+                            ${(d.value / 1000).toFixed(1)}<span className="text-sm">K</span>
+                          </div>
+                          <div className="text-[10px] text-gray-400 mt-1 font-mono">
+                            {isBest ? 'baseline' : `${(d.value / best).toFixed(1)}× best`}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between text-[10px] text-gray-400">
+                  <span>Spread: <b className="text-gray-600 font-mono">${best.toLocaleString()}</b> → <b className="text-gray-600 font-mono">${worst.toLocaleString()}</b></span>
+                  <span><b className="text-gray-600">{(worst / best).toFixed(1)}×</b> gap between best and worst</span>
+                </div>
+              </>
+            );
+          })() : (
+            <>
+              <SectionHeader title="Dropout Volume by Time Window" sub="Estimated patients discontinuing at each checkpoint" />
+              <ResponsiveContainer width="100%" height={240}>
+                <BarChart data={dropoutByWindow} margin={{ top: 4, right: 16, bottom: 0, left: 0 }}>
+                  <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#EDF2F7" />
+                  <XAxis dataKey="window" tick={{ fontSize: 11, fill: '#718096' }} axisLine={{ stroke: '#E2E8F0' }} tickLine={false} />
+                  <YAxis tick={{ fontSize: 11, fill: '#718096' }} axisLine={false} tickLine={false} />
+                  <Tooltip content={<ChartTooltip />} />
+                  <Bar dataKey="seg0" name="Low Urgency" fill={SEGMENT_COLORS[0]} stackId="a" />
+                  <Bar dataKey="seg1" name="Financial Barrier" fill={SEGMENT_COLORS[1]} stackId="a" />
+                  <Bar dataKey="seg2" name="Low Friction" fill={SEGMENT_COLORS[2]} stackId="a" />
+                  <Bar dataKey="seg3" name="Moderate Risk" fill={SEGMENT_COLORS[3]} stackId="a" radius={[4,4,0,0]} />
+                  <Legend iconType="circle" iconSize={8} formatter={v => <span style={{ fontSize: 10, color: '#718096' }}>{v}</span>} />
+                </BarChart>
+              </ResponsiveContainer>
+            </>
+          )}
         </div>
 
         {/* Global SHAP drivers or wasted spend (role-based) */}

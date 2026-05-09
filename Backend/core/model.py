@@ -144,6 +144,39 @@ def _build_segments() -> List[Dict]:
     df_seg = loader.df_segments
     df_main = loader.df_main
 
+    # Prefer df_main when it has cluster info — patient-level aggregates are
+    # always complete and correct. df_seg is only useful if it has the
+    # exact column schema the col_map below expects.
+    if df_main is not None and "cluster" in df_main.columns and "is_adherent" in df_main.columns:
+        results = []
+        for i in range(4):
+            sub = df_main[df_main["cluster"] == i]
+            if sub.empty:
+                results.append(_SEGMENT_FALLBACK[i])
+                continue
+            adh = float(sub["is_adherent"].mean())
+            cost = float(sub["annual_drug_cost"].mean()) if "annual_drug_cost" in sub.columns else 10603
+            wasted_per_pt = round(cost * (1 - adh))
+            results.append({
+                "cluster":      i,
+                "label":        SEGMENT_LABELS[i],
+                "short":        SEGMENT_SHORT[i],
+                "n":            len(sub),
+                "adherence":    round(adh, 4),
+                "age":          round(float(sub["RIDAGEYR"].mean()), 1) if "RIDAGEYR" in sub.columns else _SEGMENT_FALLBACK[i]["age"],
+                "bmi":          round(float(sub["BMXBMI"].mean()), 1) if "BMXBMI" in sub.columns else _SEGMENT_FALLBACK[i]["bmi"],
+                "hba1c":        round(float(sub["LBXGH"].mean()), 2) if "LBXGH" in sub.columns else _SEGMENT_FALLBACK[i]["hba1c"],
+                "oop_cost":     round(float(sub["avg_oop_cost"].mean()), 2) if "avg_oop_cost" in sub.columns else _SEGMENT_FALLBACK[i]["oop_cost"],
+                "cost_pressure":round(float(sub["income_cost_pressure"].mean()), 1) if "income_cost_pressure" in sub.columns else _SEGMENT_FALLBACK[i]["cost_pressure"],
+                "bio_friction": round(float(sub["bio_friction"].mean()), 3) if "bio_friction" in sub.columns else _SEGMENT_FALLBACK[i]["bio_friction"],
+                "refill_score": round(float(sub["system_refill_score"].mean()), 4) if "system_refill_score" in sub.columns else _SEGMENT_FALLBACK[i]["refill_score"],
+                "comorbidity":  round(float(sub["comorbidity_score"].mean()), 2) if "comorbidity_score" in sub.columns else _SEGMENT_FALLBACK[i]["comorbidity"],
+                "wasted_per_pt":    wasted_per_pt,
+                "cost_per_hba1c":   _SEGMENT_FALLBACK[i]["cost_per_hba1c"],
+                "cost_per_weight":  _SEGMENT_FALLBACK[i]["cost_per_weight"],
+            })
+        return results
+
     if df_seg is not None:
         # Map CSV columns to expected shape
         results = []

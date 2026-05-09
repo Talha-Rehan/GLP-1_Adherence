@@ -2,6 +2,7 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Search, Filter, ChevronLeft, ChevronRight, DollarSign, ChevronUp, ChevronDown, Settings2, X, Eye, EyeOff, Building2 } from 'lucide-react';
 import { SegmentDot } from '../components/shared';
+import { SkeletonTable } from '../components/shared/LoadingSkeleton';
 import { SEGMENT_SHORT, SEGMENT_COLORS } from '../data/mockData';
 import { usePatients } from '../hooks/usePatients';
 import { useRole } from '../context/RoleContext';
@@ -183,7 +184,7 @@ function SortHeader({ label, sortKey: sk, currentSort, currentDir, onSort }) {
 export default function PatientRiskPanel() {
   const navigate = useNavigate();
   const { isInsurer } = useRole();
-  const { patients } = usePatients();
+  const { patients, loading } = usePatients();
   const [search, setSearch]           = useState('');
   const [segFilter, setSegFilter]     = useState('All');
   const [molFilter, setMolFilter]     = useState('All');
@@ -209,7 +210,7 @@ export default function PatientRiskPanel() {
       return sortDir === 'asc' ? (av > bv ? 1 : -1) : (av < bv ? 1 : -1);
     });
     return d;
-  }, [search, segFilter, molFilter, predFilter, financialOnly, minRisk, sortKey, sortDir]);
+  }, [patients, search, segFilter, molFilter, predFilter, financialOnly, minRisk, sortKey, sortDir]);
 
   const pages     = Math.ceil(filtered.length / PAGE_SIZE);
   const visible   = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
@@ -280,6 +281,14 @@ export default function PatientRiskPanel() {
   };
 
   const visibleColumns = ALL_COLUMNS.filter(c => hasCol(c.key));
+
+  if (loading) {
+    return (
+      <div className="risk-panel-page animate-fade-in">
+        <SkeletonTable rows={20} />
+      </div>
+    );
+  }
 
   /* ── Filter select component ── */
   const FilterSelect = ({ label, value, onChange, options }) => (

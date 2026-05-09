@@ -87,7 +87,7 @@ def _is_financial(driver: Optional[str]) -> bool:
 @router.get("/patients")
 def get_patients(
     page:        int   = Query(0, ge=0),
-    page_size:   int   = Query(20, ge=1, le=100),
+    page_size:   int   = Query(20, ge=1, le=10000),
     segment:     Optional[int]   = Query(None),
     molecule:    Optional[str]   = Query(None),
     min_risk:    Optional[float] = Query(None, ge=0.0, le=1.0),

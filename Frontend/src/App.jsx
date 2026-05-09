@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { RoleProvider } from './context/RoleContext';
+import { PatientsProvider } from './context/PatientsContext';
 import AppShell from './components/layout/AppShell';
 import LoadingScreen from './components/shared/LoadingScreen';
 import { useAppLoader } from './hooks/useAppLoader';
@@ -21,6 +22,7 @@ export default function App() {
 
   return (
     <RoleProvider>
+      <PatientsProvider>
       <BrowserRouter>
         <AppShell>
           <Routes>
@@ -35,6 +37,7 @@ export default function App() {
           </Routes>
         </AppShell>
       </BrowserRouter>
+      </PatientsProvider>
     </RoleProvider>
   );
 }

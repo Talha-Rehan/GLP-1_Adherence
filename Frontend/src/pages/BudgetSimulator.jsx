@@ -5,7 +5,8 @@ import {
 } from 'recharts';
 import { Link } from 'react-router-dom';
 import { SectionHeader } from '../components/shared';
-import { calcBudgetImpact, SEGMENT_COLORS, SEGMENT_SHORT } from '../data/mockData';
+import { SkeletonCard, SkeletonChart } from '../components/shared/LoadingSkeleton';
+import { SEGMENT_COLORS, SEGMENT_SHORT } from '../data/mockData';
 import { useBudgetImpact } from '../hooks/useBudgetImpact';
 import { TrendingDown, DollarSign, CheckCircle, XCircle, Download, Stethoscope } from 'lucide-react';
 import { useRole } from '../context/RoleContext';
@@ -42,10 +43,10 @@ export default function BudgetSimulator() {
   const [interventionCost, setInterventionCost] = useState(500);
   const [scope, setScope]                       = useState(100);
   const [exported, setExported]                 = useState(false);
-  const { result: apiResult, calculate }        = useBudgetImpact();
+  const { result: apiResult, loading, calculate } = useBudgetImpact();
 
-  // Use API result if available, fall back to local calculation for instant UI
-  const results = apiResult ?? calcBudgetImpact(dropoutReduction, interventionCost, scope);
+  const isLoading = loading || !apiResult;
+  const results   = apiResult ?? [];
 
   // Fire API call whenever sliders change (debounced via useMemo trigger)
   useMemo(() => {
@@ -68,6 +69,63 @@ export default function BudgetSimulator() {
     totalNet > 0
       ? Math.ceil(totalInterventionCost / (totalWasteRecovered / 12))
       : null;
+
+  const segmentCards = isLoading
+    ? Array.from({ length: 4 }, (_, i) => <SkeletonCard key={i} h={240} />)
+    : results.map((r, i) => (
+        <div key={i} className="card p-4 animate-fade-up"
+             style={{
+               animationDelay: `${i * 0.06}s`,
+               borderTop:      `3px solid ${SEGMENT_COLORS[i]}`,
+               opacity:        !r.roiPositive ? 0.85 : 1,
+             }}>
+          <div className="flex items-start justify-between mb-3">
+            <div>
+              <div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: SEGMENT_COLORS[i] }}>
+                Cluster {i}
+              </div>
+              <div className="text-xs text-gray-600 mt-0.5 leading-tight">{r.label}</div>
+            </div>
+            {r.roiPositive
+              ? <CheckCircle size={16} style={{ color: '#2E7D32' }} />
+              : <XCircle    size={16} style={{ color: '#C62828' }} />}
+          </div>
+          <div className="space-y-2 text-xs">
+            <div className="flex justify-between">
+              <span className="text-gray-400">Patients</span>
+              <span className="font-semibold">{r.n.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-400">Dropout Rate</span>
+              <span className="font-mono">
+                {(r.baselineDropout * 100).toFixed(1)}%
+                <span className="text-gray-400"> → </span>
+                {(r.newDropout * 100).toFixed(1)}%
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-400">Waste Recovered</span>
+              <span className="font-semibold text-green-700">{fmtMoney(r.wasteRecovered)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-400">Intervention Cost</span>
+              <span className="font-semibold text-orange-600">−{fmtMoney(r.interventionCost)}</span>
+            </div>
+            <div className="border-t border-gray-100 pt-2 flex justify-between">
+              <span className="font-semibold text-gray-700">Net Saving</span>
+              <span className="font-semibold font-mono"
+                    style={{ color: r.roiPositive ? '#2E7D32' : '#C62828' }}>
+                {r.roiPositive ? '+' : ''}{fmtMoney(r.netSaving)}
+              </span>
+            </div>
+          </div>
+          {!r.roiPositive && (
+            <div className="mt-3 text-[10px] text-orange-700 bg-orange-50 rounded-lg p-2 leading-relaxed border border-orange-100">
+              ROI negative — dropout rate too low to justify this intervention cost for this segment.
+            </div>
+          )}
+        </div>
+      ));
 
   const handleExport = () => {
     const lines = [
@@ -155,6 +213,9 @@ export default function BudgetSimulator() {
       </div>
 
       {/* ── Total banner ────────────────────────────────────────── */}
+      {isLoading ? (
+        <SkeletonCard h={140} />
+      ) : (
       <div className="card p-6 flex items-center justify-between gap-6"
            style={{
              background:   totalNet > 0 ? 'linear-gradient(135deg, #E8F5E9, #F1F8E9)' : 'linear-gradient(135deg, #FFEBEE, #FFF3F3)',
@@ -190,66 +251,17 @@ export default function BudgetSimulator() {
           ))}
         </div>
       </div>
+      )}
 
       {/* ── Per-segment cards ───────────────────────────────────── */}
       <div className="grid grid-cols-4 gap-4">
-        {results.map((r, i) => (
-          <div key={i} className="card p-4 animate-fade-up"
-               style={{
-                 animationDelay: `${i * 0.06}s`,
-                 borderTop:      `3px solid ${SEGMENT_COLORS[i]}`,
-                 opacity:        !r.roiPositive ? 0.85 : 1,
-               }}>
-            <div className="flex items-start justify-between mb-3">
-              <div>
-                <div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: SEGMENT_COLORS[i] }}>
-                  Cluster {i}
-                </div>
-                <div className="text-xs text-gray-600 mt-0.5 leading-tight">{r.label}</div>
-              </div>
-              {r.roiPositive
-                ? <CheckCircle size={16} style={{ color: '#2E7D32' }} />
-                : <XCircle    size={16} style={{ color: '#C62828' }} />}
-            </div>
-            <div className="space-y-2 text-xs">
-              <div className="flex justify-between">
-                <span className="text-gray-400">Patients</span>
-                <span className="font-semibold">{r.n.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400">Dropout Rate</span>
-                <span className="font-mono">
-                  {(r.baselineDropout * 100).toFixed(1)}%
-                  <span className="text-gray-400"> → </span>
-                  {(r.newDropout * 100).toFixed(1)}%
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400">Waste Recovered</span>
-                <span className="font-semibold text-green-700">{fmtMoney(r.wasteRecovered)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400">Intervention Cost</span>
-                <span className="font-semibold text-orange-600">−{fmtMoney(r.interventionCost)}</span>
-              </div>
-              <div className="border-t border-gray-100 pt-2 flex justify-between">
-                <span className="font-semibold text-gray-700">Net Saving</span>
-                <span className="font-semibold font-mono"
-                      style={{ color: r.roiPositive ? '#2E7D32' : '#C62828' }}>
-                  {r.roiPositive ? '+' : ''}{fmtMoney(r.netSaving)}
-                </span>
-              </div>
-            </div>
-            {!r.roiPositive && (
-              <div className="mt-3 text-[10px] text-orange-700 bg-orange-50 rounded-lg p-2 leading-relaxed border border-orange-100">
-                ROI negative — dropout rate too low to justify this intervention cost for this segment.
-              </div>
-            )}
-          </div>
-        ))}
+        {segmentCards}
       </div>
 
       {/* ── Cumulative impact chart ─────────────────────────────── */}
+      {isLoading ? (
+        <SkeletonChart h={280} />
+      ) : (
       <div className="card p-5">
         <SectionHeader
           title="12-Month Cumulative Net Impact"
@@ -287,6 +299,7 @@ export default function BudgetSimulator() {
             : ' Adjust parameters to reach positive ROI.'}
         </div>
       </div>
+      )}
     </div>
   );
 }

@@ -1,6 +1,5 @@
 import { useState, useCallback } from "react";
 import { api } from "../data/api";
-import { calcBudgetImpact } from "../data/mockData";
 
 export function useBudgetImpact() {
   const [result, setResult]   = useState(null);
@@ -16,7 +15,6 @@ export function useBudgetImpact() {
         intervention_cost_per_patient:  interventionCostPerPt,
         population_scope_pct:           populationScopePct,
       });
-      // Normalise API response to match calcBudgetImpact shape used in BudgetSimulator
       const segments = res.segments.map((s) => ({
         cluster:          s.cluster,
         label:            s.label,
@@ -31,9 +29,8 @@ export function useBudgetImpact() {
       }));
       setResult(segments);
     } catch (err) {
-      // Fallback to client-side calculation
       setError(err);
-      setResult(calcBudgetImpact(dropoutReductionPct, interventionCostPerPt, populationScopePct));
+      // Don't poison `result` with mock data — leave previous value (or null) in place
     } finally {
       setLoading(false);
     }

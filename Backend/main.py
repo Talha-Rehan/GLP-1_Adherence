@@ -1,18 +1,23 @@
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from core.config import settings
-from core.loader import load_all
-from core.model import init_all_caches
+from core import loader, mongo
+from core.model import init_startup_caches
 from routers import summary, patients, segments, survival, cost, budget, shap, info
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    load_all()
-    init_all_caches()
+    mongo.get_client()
+    await mongo.ping()
+    print(f"🔌  Connected to MongoDB: {settings.mongodb_db_name}")
+    loader.load_binary_artifacts()
+    await init_startup_caches()
     yield
+    mongo.close_client()
 
 
 app = FastAPI(

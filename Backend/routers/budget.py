@@ -1,31 +1,35 @@
+"""
+Budget Impact Simulator — fetches segment-level CEA from Mongo once,
+then runs the same ROI math the dashboard expects.
+"""
+
 from math import ceil
+
 from fastapi import APIRouter
-import core.model as model
+
+from core.mongo import get_db
 from schemas.budget import BudgetRequest, BudgetResponse, SegmentImpact
 
 router = APIRouter()
 
 
 @router.post("/budget-impact")
-def budget_impact(req: BudgetRequest) -> BudgetResponse:
+async def budget_impact(req: BudgetRequest) -> BudgetResponse:
     reduction   = req.dropout_reduction_pct / 100
     scope       = req.population_scope_pct / 100
     interv_cost = req.intervention_cost_per_patient
 
-    # Use real CEA data if available, else fallback constants
-    cea = (model.cost_cache or {}).get("cea", model._CEA_FALLBACK)
+    db = get_db()
+    cea = await db.cost_effectiveness.find({}, {"_id": 0}).sort("cluster", 1).to_list(length=None)
 
     segments_out = []
     total_net = total_waste = total_interv = 0
 
     for seg in cea:
-        i           = seg["cluster"]
+        i           = int(seg["cluster"])
         n_scope     = int(seg["n"] * scope)
-        annual_cost = seg["annual_cost"]
-        adh         = next(
-            (s["adherence"] for s in (model.segments_cache or []) if s.get("cluster") == i),
-            [0.208, 0.309, 0.854, 0.406][i],
-        )
+        annual_cost = float(seg.get("annual_cost") or 0)
+        adh         = float(seg.get("adherence_rate") or 0)
         dropout_rate = 1 - adh
 
         baseline_wasted = annual_cost * dropout_rate * n_scope
@@ -41,7 +45,7 @@ def budget_impact(req: BudgetRequest) -> BudgetResponse:
 
         segments_out.append(SegmentImpact(
             cluster=i,
-            label=seg["label"],
+            label=seg.get("label") or seg.get("segment") or f"Segment {i}",
             n_in_scope=n_scope,
             baseline_dropout_rate=round(dropout_rate, 4),
             new_dropout_rate=round(new_dropout, 4),

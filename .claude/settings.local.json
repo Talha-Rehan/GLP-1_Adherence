@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(python -m compileall -q core scripts routers main.py)"
     ]
   }
 }

@@ -13,6 +13,10 @@ Collections created in DB `glp1_analytics` (configurable via env):
     cost_effectiveness    ← cost_effectiveness.csv ⨝ icer_by_segment.csv (pivoted)
     survival_checkpoints  ← survival_checkpoints.csv
     survival_curves       ← Kaplan–Meier fit on patients
+    progression_cost      ← progression_cost.csv      (Consequence Model Phase 1)
+    rebound_risk          ← rebound_risk.csv          (Consequence Model Phase 2 — per patient)
+    rebound_trajectory    ← rebound_trajectory.csv    (Consequence Model Phase 2 — line chart)
+    rebound_sensitivity   ← rebound_sensitivity.csv   (Consequence Model Phase 2 — sensitivity)
     model_meta            ← hardcoded notebook metrics
 """
 
@@ -235,6 +239,62 @@ def migrate_survival_curves(db, df_patients: pd.DataFrame) -> None:
     db.survival_curves.create_index([("cluster", ASCENDING)], unique=True)
 
 
+# ── progression_cost (Phase 1 of the Consequence Model) ──────────────────────
+def migrate_progression_cost(db, data_dir: Path) -> None:
+    path = data_dir / "progression_cost.csv"
+    if not path.exists():
+        print("  ⚠️   progression_cost.csv not found — skipping. Run "
+              "`python -m Model.consequence.downstream_cost` from the project root.")
+        return
+
+    df = pd.read_csv(path)
+    docs = [_doc(row) for _, row in df.iterrows()]
+    _replace_collection(db, "progression_cost", docs)
+    db.progression_cost.create_index([("cluster", ASCENDING)])
+    db.progression_cost.create_index([("patient_idx", ASCENDING)], unique=True)
+
+
+# ── rebound (Consequence Model Phase 2) ──────────────────────────────────────
+def migrate_rebound_risk(db, data_dir: Path) -> None:
+    path = data_dir / "rebound_risk.csv"
+    if not path.exists():
+        print("  ⚠️   rebound_risk.csv not found — skipping. Run "
+              "`python -m Model.consequence.rebound_risk` from the project root.")
+        return
+
+    df = pd.read_csv(path)
+    docs = [_doc(row) for _, row in df.iterrows()]
+    _replace_collection(db, "rebound_risk", docs)
+    db.rebound_risk.create_index([("cluster", ASCENDING)])
+    db.rebound_risk.create_index([("patient_idx", ASCENDING)], unique=True)
+
+
+def migrate_rebound_trajectory(db, data_dir: Path) -> None:
+    path = data_dir / "rebound_trajectory.csv"
+    if not path.exists():
+        print("  ⚠️   rebound_trajectory.csv not found — skipping.")
+        return
+
+    df = pd.read_csv(path)
+    docs = [_doc(row) for _, row in df.iterrows()]
+    _replace_collection(db, "rebound_trajectory", docs)
+    db.rebound_trajectory.create_index([("cluster", ASCENDING), ("scenario", ASCENDING)])
+
+
+def migrate_rebound_sensitivity(db, data_dir: Path) -> None:
+    path = data_dir / "rebound_sensitivity.csv"
+    if not path.exists():
+        print("  ⚠️   rebound_sensitivity.csv not found — skipping.")
+        return
+
+    df = pd.read_csv(path)
+    docs = [_doc(row) for _, row in df.iterrows()]
+    _replace_collection(db, "rebound_sensitivity", docs)
+    db.rebound_sensitivity.create_index(
+        [("cluster", ASCENDING), ("scenario", ASCENDING)], unique=True
+    )
+
+
 # ── model_meta (hardcoded notebook metrics) ──────────────────────────────────
 def migrate_model_meta(db) -> None:
     doc = {
@@ -285,6 +345,10 @@ def main() -> int:
     migrate_segment_profiles(db, df_patients, cea_docs)
     migrate_survival_checkpoints(db, data_dir)
     migrate_survival_curves(db, df_patients)
+    migrate_progression_cost(db, data_dir)
+    migrate_rebound_risk(db, data_dir)
+    migrate_rebound_trajectory(db, data_dir)
+    migrate_rebound_sensitivity(db, data_dir)
     migrate_model_meta(db)
 
     print("\n✅  Migration complete.")

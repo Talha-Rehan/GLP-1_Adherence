@@ -2,7 +2,20 @@
   "permissions": {
     "allow": [
       "Bash(npm run *)",
-      "Bash(python -m compileall -q core scripts routers main.py)"
+      "Bash(python -m compileall -q core scripts routers main.py)",
+      "Bash(python -c \"import json,sys; nb=json.load\\(sys.stdin\\); [print\\('---CELL [{}]---'.format\\(c.get\\('cell_type'\\)\\)\\) or print\\(''.join\\(c.get\\('source',[]\\)\\) if isinstance\\(c.get\\('source'\\),list\\) else c.get\\('source',''\\)\\) for c in nb['cells']]\")",
+      "Bash(python -m pytest Model/consequence/tests -v)",
+      "Bash(venv/Scripts/python.exe -m pytest ../Model/consequence/tests -v)",
+      "Bash(venv/Scripts/python.exe -m pip install pytest)",
+      "Bash(Backend/venv/Scripts/python.exe -m pytest Model/consequence/tests -v)",
+      "Bash(Backend/venv/Scripts/python.exe -m Model.consequence.downstream_cost)",
+      "Bash(venv/Scripts/python.exe -c \"from routers import consequence; from schemas import consequence as s; print\\('routers/consequence ok'\\); print\\('schemas/consequence ok'\\)\")",
+      "Bash(venv/Scripts/python.exe -c \"import main; print\\('main.py imports ok'\\); print\\('routes:', [r.path for r in main.app.routes if 'consequence' in r.path]\\)\")",
+      "Bash(Backend/venv/Scripts/python.exe -m Model.consequence.rebound_risk)",
+      "Bash(venv/Scripts/python.exe -c \"from routers import consequence; from schemas import consequence as s; print\\('routers/consequence OK'\\); print\\('schemas/consequence OK'\\); print\\('endpoints:', [r.path for r in consequence.router.routes]\\)\")",
+      "Bash(venv/Scripts/python.exe -c \"from scripts import migrate_csv_to_mongo as m; print\\('migration script imports OK'\\)\")",
+      "Bash(venv/Scripts/python.exe -m scripts.migrate_csv_to_mongo)",
+      "Bash(PYTHONIOENCODING=utf-8 venv/Scripts/python.exe -m scripts.migrate_csv_to_mongo)"
     ]
   }
 }

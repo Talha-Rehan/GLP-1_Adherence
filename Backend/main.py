@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from core.config import settings
 from core import loader, mongo
 from core.model import init_startup_caches
-from routers import summary, patients, segments, survival, cost, budget, shap, info
+from routers import summary, patients, segments, survival, cost, budget, shap, info, consequence
 
 
 @asynccontextmanager
@@ -43,6 +43,7 @@ app.include_router(cost.router,     prefix="/api")
 app.include_router(budget.router,   prefix="/api")
 app.include_router(shap.router,     prefix="/api")
 app.include_router(info.router,     prefix="/api")
+app.include_router(consequence.router, prefix="/api")
 
 
 @app.get("/health")

@@ -27,4 +27,11 @@ export const api = {
   getCostEffectiveness: ()       => get("/api/cost-effectiveness"),
   getBudgetImpact:      (body)   => post("/api/budget-impact", body),
   getModelInfo:         ()       => get("/api/model/info"),
+
+  // Consequence Model (Phase 4 "Cost of Inaction" screen)
+  getDownstreamCost:    ()       => get("/api/consequence/downstream-cost"),
+  getReboundRisk:       ()       => get("/api/consequence/rebound-risk"),
+  getPayerScenarios:    ()       => get("/api/consequence/payer-scenarios"),
+  getPayerROI:          (interventionCost = 500, payerType = "current") =>
+    get(`/api/consequence/payer-roi?intervention_cost=${interventionCost}&payer_type=${payerType}`),
 };

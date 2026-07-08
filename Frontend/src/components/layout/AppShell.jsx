@@ -4,7 +4,7 @@ import { useRole } from '../../context/RoleContext';
 import {
   LayoutDashboard, Users, UserCircle, PieChart, TrendingDown,
   DollarSign, Calculator, Settings, ChevronLeft, ChevronRight,
-  Activity, Building2, Stethoscope,
+  Activity, Building2, Stethoscope, AlertTriangle,
 } from 'lucide-react';
 
 const NAV_ITEMS = [
@@ -13,7 +13,8 @@ const NAV_ITEMS = [
   { to: '/segments', icon: PieChart,        label: 'Segment Explorer',     primary: null },
   { to: '/survival', icon: TrendingDown,    label: 'Survival Analysis',    primary: null },
   // { to: '/cost',     icon: DollarSign,      label: 'Cost-Effectiveness',   primary: 'insurer' },
-  { to: '/budget',   icon: Calculator,      label: 'Budget Simulator',     primary: 'insurer' },
+  { to: '/budget',      icon: Calculator,     label: 'Budget Simulator',     primary: 'insurer' },
+  { to: '/consequence', icon: AlertTriangle,  label: 'Cost of Inaction',     primary: 'insurer' },
   // { to: '/settings', icon: Settings,        label: 'Settings & Data Info', primary: null },
 ];
 
@@ -114,20 +115,20 @@ export default function AppShell({ children }) {
 
           {/* Section: Analytics */}
           {!collapsed && <div className="text-[10px] text-white/25 uppercase tracking-widest px-3 pt-4 pb-1">Analytics</div>}
-          {NAV_ITEMS.slice(2, 5).map(item => (
+          {NAV_ITEMS.slice(2, 4).map(item => (
             <NavItem key={item.to} item={item} collapsed={collapsed} isInsurer={isInsurer} />
           ))}
 
-          {/* Section: Finance — insurer gets badge */}
-          {/* {!collapsed && (
+          {/* Section: Financial — insurer gets badge */}
+          {!collapsed && (
             <div className="flex items-center gap-2 px-3 pt-4 pb-1">
               <div className="text-[10px] text-white/25 uppercase tracking-widest">Financial</div>
               {isInsurer && <div className="text-[9px] bg-blue-500/30 text-blue-300 px-1.5 py-0.5 rounded-full">Primary</div>}
             </div>
           )}
-          {NAV_ITEMS.slice(5, 6).map(item => (
+          {NAV_ITEMS.slice(4, 6).map(item => (
             <NavItem key={item.to} item={item} collapsed={collapsed} isInsurer={isInsurer} />
-          ))} */}
+          ))}
 
           {/* Settings */}
           {!collapsed && <div className="text-[10px] text-white/25 uppercase tracking-widest px-3 pt-4 pb-1">System</div>}

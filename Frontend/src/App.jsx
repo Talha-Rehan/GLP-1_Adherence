@@ -11,6 +11,7 @@ import SegmentExplorer from './pages/SegmentExplorer';
 import SurvivalAnalysis from './pages/SurvivalAnalysis';
 import CostEffectiveness from './pages/CostEffectiveness';
 import BudgetSimulator from './pages/BudgetSimulator';
+import CostOfInaction from './pages/CostOfInaction';
 import Settings from './pages/Settings';
 
 export default function App() {
@@ -33,6 +34,7 @@ export default function App() {
             <Route path="/survival"     element={<SurvivalAnalysis />} />
             <Route path="/cost"         element={<CostEffectiveness />} />
             <Route path="/budget"       element={<BudgetSimulator />} />
+            <Route path="/consequence"  element={<CostOfInaction />} />
             <Route path="/settings"     element={<Settings />} />
           </Routes>
         </AppShell>

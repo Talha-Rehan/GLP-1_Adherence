@@ -410,6 +410,34 @@ and [evidence/markov_scope_decision.md](evidence/markov_scope_decision.md).
   [Model/consequence/markov.py](Model/consequence/markov.py).
 - API: `GET /api/consequence/downstream-cost`.
 
+### 10.2a Payer ROI Synthesizer (Phase 3)
+
+- Per-cluster ROI at 1, 3, and 5-year horizons using registry-sourced Markov
+  projections (dropout-side and on-therapy-side), model-derived adherence
+  probabilities, per-molecule net-of-rebate GLP-1 costs.
+- Formula (audit-compliant — see [evidence/cea_audit.md](evidence/cea_audit.md)):
+  `expected_downstream = (1−α)·C_dropout + α·C_adherent`;
+  `gross_benefit = C_dropout − expected_downstream`;
+  `drug_cost = α·D·annuity(t,r) + (1−α)·D·t_drop/365`;
+  `net_benefit = gross_benefit − drug_cost − intervention_cost`;
+  `ROI = net_benefit / drug_cost`.
+- Break-even adherence: minimum α at which annual drug cost equals per-patient
+  avoided cost. Returns None when the on-therapy projection is not strictly
+  cheaper (program cannot break even at any adherence).
+- Intervention cost threshold: `gross_benefit − drug_cost` at 5 years — the
+  max spend per patient that keeps ROI ≥ 0.
+- Time-to-positive ROI: linearly interpolated year at which the ROI crosses
+  zero, computed on a 1..5-year series.
+- Outputs:
+  - `payer_roi.csv` (per-cluster, 4 rows) — all horizons in wide format.
+  - `payer_roi_yearly.csv` (per-cluster × year, 20 rows) — long format for
+    the dashboard's time-to-positive line chart.
+- Code: [Model/consequence/payer_roi.py](Model/consequence/payer_roi.py),
+  [Model/consequence/roi.py](Model/consequence/roi.py).
+- API: `GET /api/consequence/payer-roi?intervention_cost=<usd>` — ROI is
+  recomputed server-side from the caller-supplied intervention cost so the
+  dashboard slider works without persisting new documents to Mongo.
+
 ### 10.2 Metabolic Rebound Risk Engine (Phase 2)
 
 - Per-patient 12-month HbA1c and BMI trajectory post-dropout, parameterized
@@ -478,3 +506,29 @@ In addition to the §7 limitations on the underlying training data:
 18. **CV event recurrence not modeled.** First CV event applies acute
     + follow-up cost; subsequent CV events within the same 5-year window
     are not modeled.
+19. **GLP-1 net-of-rebate assumption.** Payer ROI uses net drug cost =
+    WAC × (1 − 0.35) as the default. The 0.35 rebate fraction is
+    industry-typical (SSR Health, IQVIA, CRS R47487) but is a rough midpoint
+    of a 30–40% observed range and is flagged in the registry as
+    ASSUMED-NOT-SOURCED. Set `glp1_payer_net_rebate_fraction = 0` for a
+    WAC-based upper-bound sensitivity.
+20. **QALY / quality-of-life benefits not modeled.** ROI is computed on
+    pure cost avoidance. GLP-1s are typically cost-effective at
+    ~$50,000/QALY thresholds when QoL gains are included; a pure cost-avoidance
+    5-year ROI is expected to be negative for most patients, and this is
+    consistent with published health-economic assessments. The dashboard should
+    frame ROI as "budget impact" not "value" for this reason.
+21. **On-therapy Markov modifiers are RCT-derived.** `on_therapy_cv_rr` = 0.74
+    (SUSTAIN-6/LEADER), `on_therapy_renal_rr` = 0.64 (FLOW), and
+    `on_therapy_glycemic_rr` = 0.15 (SUSTAIN-6/LEADER/STEP-5 HbA1c stability).
+    All are population-average relative risks — they don't distinguish
+    responders from non-responders within a cluster.
+22. **Adherence assumed constant across the horizon.** ROI uses the
+    baseline adherence rate as the α term for the full 5-year projection.
+    In reality adherence decays year-over-year (persistence curves). A v2
+    model would apply a year-specific α(t) derived from the KM survival layer.
+23. **No mortality reduction credited to on-therapy patients.** SUSTAIN-6
+    showed HR 0.63 for CV death and LEADER HR 0.78 for all-cause death, but
+    v1 uses the same baseline mortality (0.012/yr) for both cohorts. This is
+    slightly conservative for the on-therapy ROI (adherent patients live longer
+    → slightly more downstream cost accrual, marginal effect).

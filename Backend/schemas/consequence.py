@@ -14,6 +14,8 @@ class DownstreamCostCluster(BaseModel):
     esrd_probability_5yr:      float
     cv_event_probability_5yr:  float
     total_population_cost_5yr: float
+    # Cost decomposition by primary driver, per-patient avg USD at 5-yr horizon.
+    cost_by_driver_5yr:        Dict[str, float]
 
 
 class DownstreamCostResponse(BaseModel):
@@ -79,3 +81,43 @@ class ReboundRiskResponse(BaseModel):
     sensitivity:                 List[ReboundSensitivityCluster]
     population_t2d_incidence_12mo: float
     n_patients_total:             int
+
+
+# ── Payer ROI (Phase 3) ────────────────────────────────────────────────────
+
+class PayerROIHorizon(BaseModel):
+    horizon_years:      int
+    expected_drug_cost: float
+    gross_benefit:      float
+    intervention_cost:  float
+    net_benefit:        float
+    roi:                float
+
+
+class PayerROIYearlyPoint(BaseModel):
+    year: int
+    roi:  float
+
+
+class PayerROICluster(BaseModel):
+    cluster_id:                       int
+    cluster_label:                    Optional[str] = None
+    n_patients:                       int
+    adherence_probability:            float
+    avg_annual_drug_cost:             float
+    avg_time_to_dropout_days:         float
+    horizons:                         List[PayerROIHorizon]
+    yearly_roi_series:                List[PayerROIYearlyPoint]
+    break_even_adherence_rate:        Optional[float] = None
+    intervention_cost_threshold_5yr:  float
+    time_to_positive_roi_years:       Optional[float] = None
+
+
+class PayerROIResponse(BaseModel):
+    by_cluster:                       List[PayerROICluster]
+    population_roi_1yr:               float
+    population_roi_3yr:               float
+    population_roi_5yr:               float
+    population_roi_10yr:              float
+    intervention_cost_per_patient:    float
+    n_patients_total:                 int

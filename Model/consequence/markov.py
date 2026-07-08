@@ -69,6 +69,7 @@ class MarkovParams:
     # GLP-1 on-therapy relative-risk modifiers (1.0 = off therapy)
     on_therapy_cv_rr: float = 1.0
     on_therapy_renal_rr: float = 1.0
+    on_therapy_glycemic_rr: float = 1.0   # applies to S0→S1 while on therapy
 
     # Health-economics discount rate
     discount_rate: float = 0.03
@@ -101,15 +102,17 @@ def build_transition_matrix(
     CV events are not part of this matrix — they are a separate stream.
     """
     renal_rr = params.on_therapy_renal_rr if on_therapy else 1.0
+    glycemic_rr = params.on_therapy_glycemic_rr if on_therapy else 1.0
     p_12 = params.p_s1_to_s2 * renal_rr
     p_23 = params.p_s2_to_s3 * renal_rr
+    p_01 = s01_rate * glycemic_rr
     p_3d = params.p_s3_to_death
     p_d = params.p_other_to_death
 
     T = np.zeros((N_STATES, N_STATES))
-    T[S0, S1] = s01_rate
+    T[S0, S1] = p_01
     T[S0, DEATH] = p_d
-    T[S0, S0] = 1.0 - s01_rate - p_d
+    T[S0, S0] = 1.0 - p_01 - p_d
 
     T[S1, S2] = p_12
     T[S1, DEATH] = p_d

@@ -17,6 +17,8 @@ Collections created in DB `glp1_analytics` (configurable via env):
     rebound_risk          ← rebound_risk.csv          (Consequence Model Phase 2 — per patient)
     rebound_trajectory    ← rebound_trajectory.csv    (Consequence Model Phase 2 — line chart)
     rebound_sensitivity   ← rebound_sensitivity.csv   (Consequence Model Phase 2 — sensitivity)
+    payer_roi             ← payer_roi.csv             (Consequence Model Phase 3 — per cluster)
+    payer_roi_yearly      ← payer_roi_yearly.csv      (Consequence Model Phase 3 — per cluster × year)
     model_meta            ← hardcoded notebook metrics
 """
 
@@ -295,6 +297,42 @@ def migrate_rebound_sensitivity(db, data_dir: Path) -> None:
     )
 
 
+# ── payer_roi (Consequence Model Phase 3, multi-scenario) ────────────────────
+def migrate_payer_roi(db, data_dir: Path) -> None:
+    path = data_dir / "payer_roi.csv"
+    if not path.exists():
+        print("  ⚠️   payer_roi.csv not found — skipping. Run "
+              "`python -m Model.consequence.payer_roi` from the project root.")
+        return
+
+    df = pd.read_csv(path)
+    if "payer_type" not in df.columns:
+        df["payer_type"] = "current"  # backwards compat with older CSVs
+    docs = [_doc(row) for _, row in df.iterrows()]
+    _replace_collection(db, "payer_roi", docs)
+    # Compound unique index — one row per (payer_type, cluster).
+    db.payer_roi.create_index(
+        [("payer_type", ASCENDING), ("cluster", ASCENDING)], unique=True
+    )
+
+
+def migrate_payer_roi_yearly(db, data_dir: Path) -> None:
+    path = data_dir / "payer_roi_yearly.csv"
+    if not path.exists():
+        print("  ⚠️   payer_roi_yearly.csv not found — skipping.")
+        return
+
+    df = pd.read_csv(path)
+    if "payer_type" not in df.columns:
+        df["payer_type"] = "current"
+    docs = [_doc(row) for _, row in df.iterrows()]
+    _replace_collection(db, "payer_roi_yearly", docs)
+    db.payer_roi_yearly.create_index(
+        [("payer_type", ASCENDING), ("cluster", ASCENDING), ("horizon_years", ASCENDING)],
+        unique=True,
+    )
+
+
 # ── model_meta (hardcoded notebook metrics) ──────────────────────────────────
 def migrate_model_meta(db) -> None:
     doc = {
@@ -349,6 +387,8 @@ def main() -> int:
     migrate_rebound_risk(db, data_dir)
     migrate_rebound_trajectory(db, data_dir)
     migrate_rebound_sensitivity(db, data_dir)
+    migrate_payer_roi(db, data_dir)
+    migrate_payer_roi_yearly(db, data_dir)
     migrate_model_meta(db)
 
     print("\n✅  Migration complete.")

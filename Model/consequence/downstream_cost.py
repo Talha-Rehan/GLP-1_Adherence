@@ -39,8 +39,11 @@ from Model.consequence.markov import (  # noqa: E402
     primary_cost_driver,
     run_markov,
 )
+from Model.consequence.registry import (  # noqa: E402
+    BASE_REGISTRY_PATH as REGISTRY_PATH,
+    load_registry,
+)
 
-REGISTRY_PATH = PROJECT_ROOT / "evidence" / "parameter_registry.csv"
 DATA_DIR = PROJECT_ROOT / "Backend" / "data"
 SURVIVAL_PATH = DATA_DIR / "GLP1_FINAL_WITH_SURVIVAL.csv"
 SEGMENTED_PATH = DATA_DIR / "GLP1_SEGMENTED.csv"
@@ -48,12 +51,6 @@ OUTPUT_PATH = DATA_DIR / "progression_cost.csv"
 
 DEFAULT_HORIZON = 5
 SENSITIVITY_HORIZON = 10
-
-
-def load_registry(path: Path = REGISTRY_PATH) -> Dict[str, float]:
-    """Read evidence/parameter_registry.csv → {parameter_name: value} dict."""
-    df = pd.read_csv(path)
-    return {row.parameter_name: float(row.value) for row in df.itertuples()}
 
 
 def build_params(
@@ -90,6 +87,7 @@ def build_params(
         cv_hazard_s2=reg["trans_s2_to_s4_per_year"],
         on_therapy_cv_rr=reg["glp1_efficacy_residual_complication_rr"],
         on_therapy_renal_rr=reg["glp1_efficacy_residual_renal_rr"],
+        on_therapy_glycemic_rr=reg.get("glp1_efficacy_glycemic_progression_rr", 1.0),
         discount_rate=reg["discount_rate_annual"],
     )
 

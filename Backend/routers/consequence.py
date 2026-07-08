@@ -3,17 +3,21 @@ Consequence Model endpoints.
 
 Phase 1: downstream cost (Markov-projected dropout-side spend).
 Phase 2: metabolic rebound risk + per-cluster trajectory + dropout-timing sensitivity.
-Phase 3: payer ROI will be added here as an additional route.
+Phase 3: payer ROI synthesizer — combines adherence + downstream cost + drug cost.
 """
 
 from collections import Counter, defaultdict
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 
 from core.mongo import get_db
 from schemas.consequence import (
     DownstreamCostCluster,
     DownstreamCostResponse,
+    PayerROICluster,
+    PayerROIHorizon,
+    PayerROIResponse,
+    PayerROIYearlyPoint,
     ReboundCluster,
     ReboundRiskResponse,
     ReboundSensitivityCluster,
@@ -22,6 +26,10 @@ from schemas.consequence import (
     ReboundTrajectoryPoint,
     ReboundTrajectoryScenario,
 )
+
+_DEFAULT_INTERVENTION_COST = 500.0
+_PRIMARY_HORIZONS = (1, 3, 5, 10)
+_YEARLY_HORIZONS = tuple(range(1, 11))
 
 router = APIRouter(prefix="/consequence", tags=["consequence"])
 
@@ -56,16 +64,23 @@ async def get_downstream_cost() -> DownstreamCostResponse:
         c10 = float(d.get("expected_downstream_cost_10yr") or 0)
         esrd5 = float(d.get("esrd_probability_5yr") or 0)
         cv5 = float(d.get("cv_event_probability_5yr") or 0)
+        share_esrd = float(d.get("cost_share_esrd_5yr") or 0)
+        share_cv = float(d.get("cost_share_cv_5yr") or 0)
+        share_t2d = float(d.get("cost_share_uncontrolled_t2d_5yr") or 0)
 
         acc = by_cluster_acc.setdefault(
             cluster,
-            {"n": 0, "sum5": 0.0, "sum10": 0.0, "sum_esrd": 0.0, "sum_cv": 0.0},
+            {"n": 0, "sum5": 0.0, "sum10": 0.0, "sum_esrd": 0.0, "sum_cv": 0.0,
+             "sum_c_esrd": 0.0, "sum_c_cv": 0.0, "sum_c_t2d": 0.0},
         )
         acc["n"] += 1
         acc["sum5"] += c5
         acc["sum10"] += c10
         acc["sum_esrd"] += esrd5
         acc["sum_cv"] += cv5
+        acc["sum_c_esrd"] += c5 * share_esrd
+        acc["sum_c_cv"]   += c5 * share_cv
+        acc["sum_c_t2d"]  += c5 * share_t2d
 
         pop_total_5yr += c5
         pop_total_10yr += c10
@@ -90,6 +105,11 @@ async def get_downstream_cost() -> DownstreamCostResponse:
                 esrd_probability_5yr=round(acc["sum_esrd"] / n, 5),
                 cv_event_probability_5yr=round(acc["sum_cv"] / n, 5),
                 total_population_cost_5yr=round(acc["sum5"], 2),
+                cost_by_driver_5yr={
+                    "ESRD":             round(acc["sum_c_esrd"] / n, 2),
+                    "CV_event":         round(acc["sum_c_cv"] / n, 2),
+                    "Uncontrolled_T2D": round(acc["sum_c_t2d"] / n, 2),
+                },
             )
         )
 
@@ -243,3 +263,140 @@ async def get_rebound_risk() -> ReboundRiskResponse:
         population_t2d_incidence_12mo=round(pop_t2d_incidence, 4),
         n_patients_total=sum(c.n_patients for c in by_cluster),
     )
+
+
+@router.get("/payer-scenarios")
+async def get_payer_scenarios() -> dict:
+    """List available payer_type scenarios in the payer_roi collection."""
+    db = get_db()
+    scenarios = await db.payer_roi.distinct("payer_type")
+    ordering = {"current": 0, "medicare_2028": 1, "post_generic": 2}
+    scenarios.sort(key=lambda s: (ordering.get(s, 99), s))
+    return {"scenarios": scenarios, "default": "current"}
+
+
+@router.get("/payer-roi", response_model=PayerROIResponse)
+async def get_payer_roi(
+    intervention_cost: float = Query(
+        _DEFAULT_INTERVENTION_COST,
+        ge=0,
+        le=100_000,
+        description="Per-patient intervention program cost (drives the dashboard slider).",
+    ),
+    payer_type: str = Query(
+        "current",
+        description="Pricing scenario: 'current', 'medicare_2028', 'post_generic', or any file stem present in evidence/overrides/.",
+    ),
+) -> PayerROIResponse:
+    """Per-cluster ROI at 1/3/5/10-year horizons under a chosen payer_type.
+
+    The payer_roi collection stores gross_benefit and expected_drug_cost per
+    (payer_type, cluster); ROI is recomputed on the fly using the caller-supplied
+    intervention cost so the frontend slider works without persisting new
+    documents. Break-even adherence and time-to-positive ROI are re-derived
+    from the same baseline gross/drug numbers.
+    """
+    db = get_db()
+    docs = await db.payer_roi.find(
+        {"payer_type": payer_type}, {"_id": 0}
+    ).sort("cluster", 1).to_list(length=None)
+    if not docs:
+        # Fallback to 'current' if the requested scenario isn't populated
+        docs = await db.payer_roi.find({"payer_type": "current"}, {"_id": 0}).sort("cluster", 1).to_list(length=None)
+        if not docs:
+            raise HTTPException(
+                status_code=503,
+                detail=f"payer_roi collection has no docs for payer_type='{payer_type}' (or fallback 'current'). Run scripts/migrate_csv_to_mongo.py.",
+            )
+
+    by_cluster: list[PayerROICluster] = []
+    for d in docs:
+        cluster = int(d["cluster"])
+
+        horizons_out: list[PayerROIHorizon] = []
+        for h in _PRIMARY_HORIZONS:
+            gross = float(d.get(f"gross_benefit_{h}yr") or 0)
+            drug = float(d.get(f"expected_drug_cost_{h}yr") or 0)
+            net = gross - drug - intervention_cost
+            roi = (net / drug) if drug > 0 else 0.0
+            horizons_out.append(PayerROIHorizon(
+                horizon_years=h,
+                expected_drug_cost=round(drug, 2),
+                gross_benefit=round(gross, 2),
+                intervention_cost=round(intervention_cost, 2),
+                net_benefit=round(net, 2),
+                roi=round(roi, 4),
+            ))
+
+        # Full yearly ROI series 1..10 for the trajectory chart + time-to-positive lookup.
+        yearly_roi: list[tuple[int, float]] = []
+        yearly_series_out: list[PayerROIYearlyPoint] = []
+        for h in _YEARLY_HORIZONS:
+            gross = float(d.get(f"gross_benefit_{h}yr") or 0)
+            drug = float(d.get(f"expected_drug_cost_{h}yr") or 0)
+            net = gross - drug - intervention_cost
+            r = (net / drug) if drug > 0 else 0.0
+            yearly_roi.append((h, r))
+            yearly_series_out.append(PayerROIYearlyPoint(year=h, roi=round(r, 4)))
+        t_pos = _time_to_positive(yearly_roi)
+
+        # intervention threshold at 5-yr = gross(5) − drug(5) (pre-intervention net)
+        thresh_5 = float(d.get("gross_benefit_5yr") or 0) - float(d.get("expected_drug_cost_5yr") or 0)
+
+        by_cluster.append(PayerROICluster(
+            cluster_id=cluster,
+            cluster_label=_CLUSTER_LABELS.get(cluster),
+            n_patients=int(d["n_patients"]),
+            adherence_probability=round(float(d["adherence_probability"]), 4),
+            avg_annual_drug_cost=round(float(d["avg_annual_drug_cost"]), 2),
+            avg_time_to_dropout_days=round(float(d["avg_time_to_dropout_days"]), 2),
+            horizons=horizons_out,
+            yearly_roi_series=yearly_series_out,
+            break_even_adherence_rate=(
+                round(float(d["break_even_adherence_rate"]), 4)
+                if d.get("break_even_adherence_rate") is not None
+                else None
+            ),
+            intervention_cost_threshold_5yr=round(thresh_5, 2),
+            time_to_positive_roi_years=t_pos,
+        ))
+
+    pop = {h: _population_roi_from_docs(docs, h, intervention_cost) for h in _PRIMARY_HORIZONS}
+
+    return PayerROIResponse(
+        by_cluster=by_cluster,
+        population_roi_1yr=round(pop[1], 4),
+        population_roi_3yr=round(pop[3], 4),
+        population_roi_5yr=round(pop[5], 4),
+        population_roi_10yr=round(pop[10], 4),
+        intervention_cost_per_patient=intervention_cost,
+        n_patients_total=sum(c.n_patients for c in by_cluster),
+    )
+
+
+def _time_to_positive(yearly: list[tuple[int, float]]) -> float | None:
+    """Linearly interpolate the year where ROI crosses 0."""
+    if not yearly:
+        return None
+    if yearly[0][1] >= 0:
+        return float(yearly[0][0])
+    for (y1, r1), (y2, r2) in zip(yearly, yearly[1:]):
+        if r1 < 0 <= r2:
+            span = r2 - r1
+            if span == 0:
+                return float(y2)
+            frac = -r1 / span
+            return round(y1 + frac * (y2 - y1), 3)
+    return None
+
+
+def _population_roi_from_docs(docs: list[dict], horizon: int, intervention_cost: float) -> float:
+    total_net = 0.0
+    total_drug = 0.0
+    for d in docs:
+        n = int(d["n_patients"])
+        gross = float(d.get(f"gross_benefit_{horizon}yr") or 0)
+        drug = float(d.get(f"expected_drug_cost_{horizon}yr") or 0)
+        total_net += n * (gross - drug - intervention_cost)
+        total_drug += n * drug
+    return (total_net / total_drug) if total_drug > 0 else 0.0

@@ -92,11 +92,23 @@ class PayerROIHorizon(BaseModel):
     intervention_cost:  float
     net_benefit:        float
     roi:                float
+    # Intervention-only ROI (adherence-program business case).
+    # medical: (Δα·(C_d − C_a) − intervention_cost) / intervention_cost
+    #          Standard payer framing — treats drug spend as an already-committed
+    #          formulary decision and asks "how much medical cost avoidance per $ of program spend?"
+    # net:     also subtracts Δα·D·(annuity − drop_days/365), i.e. the extra drug
+    #          spend a payer incurs when adherence rises.
+    delta_benefit_medical:    float
+    delta_drug_cost:          float
+    intervention_roi_medical: float
+    intervention_roi_net:     float
 
 
 class PayerROIYearlyPoint(BaseModel):
-    year: int
-    roi:  float
+    year:                     int
+    roi:                      float
+    intervention_roi_medical: float
+    intervention_roi_net:     float
 
 
 class PayerROICluster(BaseModel):
@@ -104,6 +116,8 @@ class PayerROICluster(BaseModel):
     cluster_label:                    Optional[str] = None
     n_patients:                       int
     adherence_probability:            float
+    adherence_with_program:           float
+    effective_adherence_uplift:       float
     avg_annual_drug_cost:             float
     avg_time_to_dropout_days:         float
     horizons:                         List[PayerROIHorizon]
@@ -119,5 +133,12 @@ class PayerROIResponse(BaseModel):
     population_roi_3yr:               float
     population_roi_5yr:               float
     population_roi_10yr:              float
+    population_intervention_roi_medical_1yr:  float
+    population_intervention_roi_medical_5yr:  float
+    population_intervention_roi_medical_10yr: float
+    population_intervention_roi_net_1yr:      float
+    population_intervention_roi_net_5yr:      float
+    population_intervention_roi_net_10yr:     float
     intervention_cost_per_patient:    float
+    adherence_uplift_applied:         float
     n_patients_total:                 int

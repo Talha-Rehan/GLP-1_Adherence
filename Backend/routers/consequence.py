@@ -28,8 +28,17 @@ from schemas.consequence import (
 )
 
 _DEFAULT_INTERVENTION_COST = 500.0
+_DEFAULT_ADHERENCE_UPLIFT = 0.15   # from evidence/parameter_registry.csv → dropout_reduction_relative_assumed
+_DISCOUNT_RATE = 0.03              # from evidence/parameter_registry.csv → discount_rate_annual
 _PRIMARY_HORIZONS = (1, 3, 5, 10)
 _YEARLY_HORIZONS = tuple(range(1, 11))
+
+
+def _annuity_factor(years: int, discount_rate: float = _DISCOUNT_RATE) -> float:
+    """Discounted annuity for $1/year over `years` years (year-0 undiscounted)."""
+    if years <= 0:
+        return 0.0
+    return sum(1.0 / ((1.0 + discount_rate) ** i) for i in range(years))
 
 router = APIRouter(prefix="/consequence", tags=["consequence"])
 
@@ -287,14 +296,32 @@ async def get_payer_roi(
         "current",
         description="Pricing scenario: 'current', 'medicare_2028', 'post_generic', or any file stem present in evidence/overrides/.",
     ),
+    adherence_uplift: float = Query(
+        _DEFAULT_ADHERENCE_UPLIFT,
+        ge=0.0,
+        le=0.5,
+        description=(
+            "Absolute increase in adherence rate the program is assumed to deliver "
+            "(e.g. 0.15 = +15 percentage points). Drives the intervention-only "
+            "ROI metric. Capped at 1.0 per cluster."
+        ),
+    ),
 ) -> PayerROIResponse:
     """Per-cluster ROI at 1/3/5/10-year horizons under a chosen payer_type.
 
-    The payer_roi collection stores gross_benefit and expected_drug_cost per
-    (payer_type, cluster); ROI is recomputed on the fly using the caller-supplied
-    intervention cost so the frontend slider works without persisting new
-    documents. Break-even adherence and time-to-positive ROI are re-derived
-    from the same baseline gross/drug numbers.
+    Two ROI variants are returned side-by-side:
+
+    * **Drug economics ROI** (legacy): (α·(C_d−C_a) − drug_cost − intervention) / drug_cost.
+      Answers "does GLP-1 pay off vs. no drug at all?" — naturally negative at
+      WAC pricing because complication-avoidance doesn't clear the drug cost.
+
+    * **Intervention ROI** (added): asks the adherence-program business-case
+      question — "for every $1 of program spend, how much medical cost is
+      avoided?" Two sub-variants:
+        - medical: (Δα·(C_d−C_a) − intervention) / intervention — treats drug
+          as an already-committed formulary decision. Standard payer framing.
+        - net:     also subtracts Δα·D·(annuity − drop_days/365) — the extra
+          drug spend a payer incurs when adherence rises. CFO-view.
     """
     db = get_db()
     docs = await db.payer_roi.find(
@@ -312,6 +339,11 @@ async def get_payer_roi(
     by_cluster: list[PayerROICluster] = []
     for d in docs:
         cluster = int(d["cluster"])
+        alpha_base = float(d["adherence_probability"])
+        alpha_with = min(1.0, alpha_base + adherence_uplift)
+        delta_alpha = alpha_with - alpha_base
+        annual_drug = float(d["avg_annual_drug_cost"])
+        drop_days = float(d["avg_time_to_dropout_days"])
 
         horizons_out: list[PayerROIHorizon] = []
         for h in _PRIMARY_HORIZONS:
@@ -319,6 +351,14 @@ async def get_payer_roi(
             drug = float(d.get(f"expected_drug_cost_{h}yr") or 0)
             net = gross - drug - intervention_cost
             roi = (net / drug) if drug > 0 else 0.0
+
+            c_d = float(d.get(f"downstream_dropout_{h}yr") or 0)
+            c_a = float(d.get(f"downstream_adherent_{h}yr") or 0)
+            delta_benefit = delta_alpha * (c_d - c_a)
+            delta_drug = delta_alpha * annual_drug * (_annuity_factor(h) - drop_days / 365.0)
+            iroi_med = (delta_benefit - intervention_cost) / intervention_cost if intervention_cost > 0 else 0.0
+            iroi_net = (delta_benefit - delta_drug - intervention_cost) / intervention_cost if intervention_cost > 0 else 0.0
+
             horizons_out.append(PayerROIHorizon(
                 horizon_years=h,
                 expected_drug_cost=round(drug, 2),
@@ -326,6 +366,10 @@ async def get_payer_roi(
                 intervention_cost=round(intervention_cost, 2),
                 net_benefit=round(net, 2),
                 roi=round(roi, 4),
+                delta_benefit_medical=round(delta_benefit, 2),
+                delta_drug_cost=round(delta_drug, 2),
+                intervention_roi_medical=round(iroi_med, 4),
+                intervention_roi_net=round(iroi_net, 4),
             ))
 
         # Full yearly ROI series 1..10 for the trajectory chart + time-to-positive lookup.
@@ -337,7 +381,19 @@ async def get_payer_roi(
             net = gross - drug - intervention_cost
             r = (net / drug) if drug > 0 else 0.0
             yearly_roi.append((h, r))
-            yearly_series_out.append(PayerROIYearlyPoint(year=h, roi=round(r, 4)))
+
+            c_d = float(d.get(f"downstream_dropout_{h}yr") or 0)
+            c_a = float(d.get(f"downstream_adherent_{h}yr") or 0)
+            db_med = delta_alpha * (c_d - c_a)
+            dd = delta_alpha * annual_drug * (_annuity_factor(h) - drop_days / 365.0)
+            r_med = (db_med - intervention_cost) / intervention_cost if intervention_cost > 0 else 0.0
+            r_net = (db_med - dd - intervention_cost) / intervention_cost if intervention_cost > 0 else 0.0
+            yearly_series_out.append(PayerROIYearlyPoint(
+                year=h,
+                roi=round(r, 4),
+                intervention_roi_medical=round(r_med, 4),
+                intervention_roi_net=round(r_net, 4),
+            ))
         t_pos = _time_to_positive(yearly_roi)
 
         # intervention threshold at 5-yr = gross(5) − drug(5) (pre-intervention net)
@@ -347,9 +403,11 @@ async def get_payer_roi(
             cluster_id=cluster,
             cluster_label=_CLUSTER_LABELS.get(cluster),
             n_patients=int(d["n_patients"]),
-            adherence_probability=round(float(d["adherence_probability"]), 4),
-            avg_annual_drug_cost=round(float(d["avg_annual_drug_cost"]), 2),
-            avg_time_to_dropout_days=round(float(d["avg_time_to_dropout_days"]), 2),
+            adherence_probability=round(alpha_base, 4),
+            adherence_with_program=round(alpha_with, 4),
+            effective_adherence_uplift=round(delta_alpha, 4),
+            avg_annual_drug_cost=round(annual_drug, 2),
+            avg_time_to_dropout_days=round(drop_days, 2),
             horizons=horizons_out,
             yearly_roi_series=yearly_series_out,
             break_even_adherence_rate=(
@@ -362,6 +420,14 @@ async def get_payer_roi(
         ))
 
     pop = {h: _population_roi_from_docs(docs, h, intervention_cost) for h in _PRIMARY_HORIZONS}
+    pop_iroi_med = {
+        h: _population_intervention_roi_from_docs(docs, h, intervention_cost, adherence_uplift, net_of_drug=False)
+        for h in (1, 5, 10)
+    }
+    pop_iroi_net = {
+        h: _population_intervention_roi_from_docs(docs, h, intervention_cost, adherence_uplift, net_of_drug=True)
+        for h in (1, 5, 10)
+    }
 
     return PayerROIResponse(
         by_cluster=by_cluster,
@@ -369,7 +435,14 @@ async def get_payer_roi(
         population_roi_3yr=round(pop[3], 4),
         population_roi_5yr=round(pop[5], 4),
         population_roi_10yr=round(pop[10], 4),
+        population_intervention_roi_medical_1yr=round(pop_iroi_med[1], 4),
+        population_intervention_roi_medical_5yr=round(pop_iroi_med[5], 4),
+        population_intervention_roi_medical_10yr=round(pop_iroi_med[10], 4),
+        population_intervention_roi_net_1yr=round(pop_iroi_net[1], 4),
+        population_intervention_roi_net_5yr=round(pop_iroi_net[5], 4),
+        population_intervention_roi_net_10yr=round(pop_iroi_net[10], 4),
         intervention_cost_per_patient=intervention_cost,
+        adherence_uplift_applied=round(adherence_uplift, 4),
         n_patients_total=sum(c.n_patients for c in by_cluster),
     )
 
@@ -400,3 +473,38 @@ def _population_roi_from_docs(docs: list[dict], horizon: int, intervention_cost:
         total_net += n * (gross - drug - intervention_cost)
         total_drug += n * drug
     return (total_net / total_drug) if total_drug > 0 else 0.0
+
+
+def _population_intervention_roi_from_docs(
+    docs: list[dict],
+    horizon: int,
+    intervention_cost: float,
+    adherence_uplift: float,
+    net_of_drug: bool,
+) -> float:
+    """Patient-count-weighted intervention ROI at `horizon` years.
+
+    Aggregates Δbenefit (and optionally Δdrug) per cluster, weights by n_patients,
+    and divides by total intervention spend. If `net_of_drug=False`, returns the
+    "medical savings only" variant.
+    """
+    if intervention_cost <= 0:
+        return 0.0
+    ann = _annuity_factor(horizon)
+    total_net_delta = 0.0
+    total_intervention_spend = 0.0
+    for d in docs:
+        n = int(d["n_patients"])
+        alpha_base = float(d["adherence_probability"])
+        delta_alpha = min(1.0, alpha_base + adherence_uplift) - alpha_base
+        c_d = float(d.get(f"downstream_dropout_{horizon}yr") or 0)
+        c_a = float(d.get(f"downstream_adherent_{horizon}yr") or 0)
+        db_med = delta_alpha * (c_d - c_a)
+        dd = 0.0
+        if net_of_drug:
+            annual_drug = float(d["avg_annual_drug_cost"])
+            drop_days = float(d["avg_time_to_dropout_days"])
+            dd = delta_alpha * annual_drug * (ann - drop_days / 365.0)
+        total_net_delta += n * (db_med - dd - intervention_cost)
+        total_intervention_spend += n * intervention_cost
+    return total_net_delta / total_intervention_spend if total_intervention_spend > 0 else 0.0

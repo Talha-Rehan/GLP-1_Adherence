@@ -10,10 +10,12 @@ const fmtROI = (v) => (v == null || !Number.isFinite(v) ? '—' : v.toFixed(2));
  * ROI trajectory line chart — one line per cluster over years 1..10.
  *
  * Props:
- *   data: PayerROIResponse.by_cluster — each cluster has a yearly_roi_series
- *   height: chart height in px
+ *   data:     PayerROIResponse.by_cluster — each cluster has a yearly_roi_series
+ *   height:   chart height in px
+ *   roiField: which ROI variant to plot — "roi" (drug economics, default),
+ *             "intervention_roi_medical", or "intervention_roi_net".
  */
-export default function ROITrajectoryChart({ data, height = 320 }) {
+export default function ROITrajectoryChart({ data, height = 320, roiField = "roi" }) {
   const years = Array.from({ length: 10 }, (_, i) => i + 1);
 
   // Pivot: rows = years, cols = clusters (c0..c3)
@@ -21,7 +23,7 @@ export default function ROITrajectoryChart({ data, height = 320 }) {
     const row = { year: y };
     (data ?? []).forEach(c => {
       const pt = c.yearly_roi_series?.find(p => p.year === y);
-      row[`c${c.cluster_id}`] = pt?.roi ?? null;
+      row[`c${c.cluster_id}`] = pt?.[roiField] ?? null;
     });
     return row;
   });

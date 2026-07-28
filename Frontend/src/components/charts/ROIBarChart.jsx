@@ -14,19 +14,17 @@ const HORIZON_COLORS = {
 const fmtROI = (v) => (v == null || !Number.isFinite(v) ? '—' : v.toFixed(2));
 
 /**
- * Grouped bar chart: 4 clusters × 3 horizons (1/3/5yr).
+ * Grouped bar chart: 4 clusters × 4 horizons (1/3/5/10yr).
  *
  * Props:
- *   data: PayerROIResponse.by_cluster
- *
- * Renders three bars per cluster, colour-scaled by horizon length. A dashed
- * reference line at ROI=0 separates positive-ROI territory (above) from
- * negative-ROI territory (below).
+ *   data:     PayerROIResponse.by_cluster
+ *   roiField: which ROI variant to plot — "roi" (drug economics, default),
+ *             "intervention_roi_medical", or "intervention_roi_net".
  */
-export default function ROIBarChart({ data, height = 320 }) {
+export default function ROIBarChart({ data, height = 320, roiField = "roi" }) {
   const chartData = (data ?? []).map(c => {
     const byH = Object.fromEntries(
-      (c.horizons ?? []).map(h => [`roi_${h.horizon_years}yr`, h.roi])
+      (c.horizons ?? []).map(h => [`roi_${h.horizon_years}yr`, h[roiField]])
     );
     return {
       name: SEGMENT_SHORT[c.cluster_id] ?? `Cluster ${c.cluster_id}`,

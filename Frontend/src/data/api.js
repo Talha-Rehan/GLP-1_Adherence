@@ -32,6 +32,6 @@ export const api = {
   getDownstreamCost:    ()       => get("/api/consequence/downstream-cost"),
   getReboundRisk:       ()       => get("/api/consequence/rebound-risk"),
   getPayerScenarios:    ()       => get("/api/consequence/payer-scenarios"),
-  getPayerROI:          (interventionCost = 500, payerType = "current") =>
-    get(`/api/consequence/payer-roi?intervention_cost=${interventionCost}&payer_type=${payerType}`),
+  getPayerROI:          (interventionCost = 500, payerType = "current", adherenceUplift = 0.15) =>
+    get(`/api/consequence/payer-roi?intervention_cost=${interventionCost}&payer_type=${payerType}&adherence_uplift=${adherenceUplift}`),
 };

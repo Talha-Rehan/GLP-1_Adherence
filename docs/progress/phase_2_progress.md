@@ -20,12 +20,12 @@ Three deliverables: per-patient rebound projection, per-cluster trajectory data 
 | File | Purpose | Week |
 |---|---|---|
 | [evidence/parameter_registry.csv](../evidence/parameter_registry.csv) | +11 new sourced rows (per-molecule efficacy, GLP-1 steady state, ADA thresholds). 1 row revised (`hba1c_rebound_rate_per_month`: 0.18 → 0.10). | 4 |
-| [Model/consequence/rebound.py](../Model/consequence/rebound.py) | Pure trajectory + threshold logic. `ReboundParams`, `hba1c_trajectory`, `bmi_trajectory`, `dm_status_at_dropout`, `months_to_threshold`, `p_new_t2d_12mo`, `p_uncontrolled_12mo`, `rebound_severity_score`, `reduction_attained`. No I/O. | 4 |
-| [Model/consequence/rebound_risk.py](../Model/consequence/rebound_risk.py) | Entry script. Computes per-patient projection + per-cluster trajectory + sensitivity. Produces 3 CSVs. | 4 (per-patient) + 5 (trajectory + sensitivity) |
-| [Model/consequence/tests/test_rebound.py](../Model/consequence/tests/test_rebound.py) | 30 unit tests for rebound logic. | 4 |
-| [Backend/schemas/consequence.py](../Backend/schemas/consequence.py) | Pydantic response models for the rebound endpoint. | 5 |
-| [Backend/routers/consequence.py](../Backend/routers/consequence.py) | `GET /api/consequence/rebound-risk` endpoint. Aggregates from 3 Mongo collections. | 5 |
-| [Backend/scripts/migrate_csv_to_mongo.py](../Backend/scripts/migrate_csv_to_mongo.py) | Adds `migrate_rebound_risk()`, `migrate_rebound_trajectory()`, `migrate_rebound_sensitivity()` with indexes. | 5 |
+| [Model/consequence/rebound.py](../../Model/consequence/rebound.py) | Pure trajectory + threshold logic. `ReboundParams`, `hba1c_trajectory`, `bmi_trajectory`, `dm_status_at_dropout`, `months_to_threshold`, `p_new_t2d_12mo`, `p_uncontrolled_12mo`, `rebound_severity_score`, `reduction_attained`. No I/O. | 4 |
+| [Model/consequence/rebound_risk.py](../../Model/consequence/rebound_risk.py) | Entry script. Computes per-patient projection + per-cluster trajectory + sensitivity. Produces 3 CSVs. | 4 (per-patient) + 5 (trajectory + sensitivity) |
+| [Model/consequence/tests/test_rebound.py](../../Model/consequence/tests/test_rebound.py) | 30 unit tests for rebound logic. | 4 |
+| [Backend/schemas/consequence.py](../../Backend/schemas/consequence.py) | Pydantic response models for the rebound endpoint. | 5 |
+| [Backend/routers/consequence.py](../../Backend/routers/consequence.py) | `GET /api/consequence/rebound-risk` endpoint. Aggregates from 3 Mongo collections. | 5 |
+| [Backend/scripts/migrate_csv_to_mongo.py](../../Backend/scripts/migrate_csv_to_mongo.py) | Adds `migrate_rebound_risk()`, `migrate_rebound_trajectory()`, `migrate_rebound_sensitivity()` with indexes. | 5 |
 | [DATA_AND_MODEL_DOCUMENTATION.md](../DATA_AND_MODEL_DOCUMENTATION.md) | New §10 covering the consequence-model layer; limitations 11–18 added to the registry. | 5 |
 
 ### Test suite
@@ -74,9 +74,9 @@ Output is averaged at the cluster level — 12 rows total (4 clusters × 3 scena
 
 | File | Rows | Purpose |
 |---|---|---|
-| [Backend/data/rebound_risk.csv](../Backend/data/rebound_risk.csv) | 7,566 | Per-patient projection using each patient's actual `time_to_dropout`. |
-| [Backend/data/rebound_trajectory.csv](../Backend/data/rebound_trajectory.csv) | 60 | Per-cluster × scenario × month (4 × 3 × 5 = 60). HbA1c + BMI averages at months {0, 3, 6, 9, 12}. Powers the dashboard line chart. |
-| [Backend/data/rebound_sensitivity.csv](../Backend/data/rebound_sensitivity.csv) | 12 | Per-cluster × scenario summary at 12 months. Severity, T2D probability, uncontrolled-T2D probability. Powers the sensitivity toggle. |
+| [Backend/data/rebound_risk.csv](../../Backend/data/rebound_risk.csv) | 7,566 | Per-patient projection using each patient's actual `time_to_dropout`. |
+| [Backend/data/rebound_trajectory.csv](../../Backend/data/rebound_trajectory.csv) | 60 | Per-cluster × scenario × month (4 × 3 × 5 = 60). HbA1c + BMI averages at months {0, 3, 6, 9, 12}. Powers the dashboard line chart. |
+| [Backend/data/rebound_sensitivity.csv](../../Backend/data/rebound_sensitivity.csv) | 12 | Per-cluster × scenario summary at 12 months. Severity, T2D probability, uncontrolled-T2D probability. Powers the sensitivity toggle. |
 
 ---
 
@@ -217,7 +217,7 @@ Tracked in [updates/phase_0_and_1_progress.md](phase_0_and_1_progress.md); no ne
 
 Build the Payer ROI Synthesizer: combine adherence probability, downstream cost (Phase 1), rebound risk (Phase 2), and drug cost into a per-cluster ROI with break-even adherence rate and intervention cost threshold. Specifically:
 
-- [Model/consequence/payer_roi.py](../Model/consequence/payer_roi.py) — implementing the ROI formula from plan §Phase 3, using registry parameters + Phase 1 & 2 outputs.
+- [Model/consequence/payer_roi.py](../../Model/consequence/payer_roi.py) — implementing the ROI formula from plan §Phase 3, using registry parameters + Phase 1 & 2 outputs.
 - `payer_roi.csv` with per-cluster ROI at 1/3/5-year horizons + intervention cost threshold.
 - `GET /api/consequence/payer-roi` endpoint.
 - Reuse the on-therapy modifier flags already in `MarkovParams` and the rebound model.

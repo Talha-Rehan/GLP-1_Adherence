@@ -3,11 +3,11 @@
 **Scope:** Audit the existing cost-effectiveness and budget-impact outputs (`cost_effectiveness.csv`, `icer_by_segment.csv`, `budget_impact.csv`) before layering the new consequence model on top.
 
 **Audited artifacts:**
-- [Model/model.ipynb](../Model/model.ipynb) — `TRIAL_BENCHMARKS`, `COMPARATORS`, budget impact block
-- [Backend/data/cost_effectiveness.csv](../Backend/data/cost_effectiveness.csv)
-- [Backend/data/budget_impact.csv](../Backend/data/budget_impact.csv)
-- [Backend/data/icer_by_segment.csv](../Backend/data/icer_by_segment.csv)
-- [Backend/data/survival_checkpoints.csv](../Backend/data/survival_checkpoints.csv)
+- [Model/model.ipynb](../../Model/model.ipynb) — `TRIAL_BENCHMARKS`, `COMPARATORS`, budget impact block
+- [Backend/data/cost_effectiveness.csv](../../Backend/data/cost_effectiveness.csv)
+- [Backend/data/budget_impact.csv](../../Backend/data/budget_impact.csv)
+- [Backend/data/icer_by_segment.csv](../../Backend/data/icer_by_segment.csv)
+- [Backend/data/survival_checkpoints.csv](../../Backend/data/survival_checkpoints.csv)
 
 **Verdict legend:** PASS = sourced and defensible / FLAG = directionally fine but undocumented or coarse / FAIL = will not survive payer scrutiny without rework.
 
@@ -22,9 +22,9 @@
 | 2 — Low Friction Strong Adherer | $15,938 | $13k–$16k (skews tirzepatide?) | FLAG |
 | 3 — Moderate Risk Moderate Adherer | $7,800 | $7.2k–$9.5k | PASS |
 
-**Reasoning.** `TRIAL_BENCHMARKS` in [Model/model.ipynb](../Model/model.ipynb) (lines ~1805–1825) sets annual drug costs at $13,000 (semaglutide), $16,000 (tirzepatide), $7,800 (liraglutide), $7,200 (dulaglutide). These match published WAC list prices within ±5% (RED BOOK 2024; see `parameter_registry.csv` rows for `glp1_wac_*`).
+**Reasoning.** `TRIAL_BENCHMARKS` in [Model/model.ipynb](../../Model/model.ipynb) (lines ~1805–1825) sets annual drug costs at $13,000 (semaglutide), $16,000 (tirzepatide), $7,800 (liraglutide), $7,200 (dulaglutide). These match published WAC list prices within ±5% (RED BOOK 2024; see `parameter_registry.csv` rows for `glp1_wac_*`).
 
-**Issue.** The cluster-level `avg_annual_cost` is computed as a simple mean over `assigned_molecule` within each cluster. Because molecule assignment is random and seeded at Layer 1 ([Fusion/layer_1.py](../Fusion/layer_1.py)), variation across clusters in `avg_annual_cost` is statistical noise — not clinical reality. Cluster 2's $15,938 is higher than every other cluster because that cluster happens to contain a higher share of randomly-assigned tirzepatide patients, not because higher-adherence patients are clinically prescribed tirzepatide more often.
+**Issue.** The cluster-level `avg_annual_cost` is computed as a simple mean over `assigned_molecule` within each cluster. Because molecule assignment is random and seeded at Layer 1 ([Fusion/layer_1.py](../../Fusion/layer_1.py)), variation across clusters in `avg_annual_cost` is statistical noise — not clinical reality. Cluster 2's $15,938 is higher than every other cluster because that cluster happens to contain a higher share of randomly-assigned tirzepatide patients, not because higher-adherence patients are clinically prescribed tirzepatide more often.
 
 **Why this matters for the consequence model.** When the Payer ROI Synthesizer (Phase 3) takes `avg_annual_cost` per cluster as `drug_cost_per_patient`, the resulting cluster-level ROI differences will partly reflect noise from random molecule assignment rather than real cost differences. Document this in the ROI panel and consider a sensitivity output that fixes molecule mix across clusters.
 
@@ -36,7 +36,7 @@
 
 ## B. 15% dropout reduction assumption in `budget_impact.csv`
 
-**Current state.** [Model/model.ipynb](../Model/model.ipynb) line ~2017:
+**Current state.** [Model/model.ipynb](../../Model/model.ipynb) line ~2017:
 
 ```python
 INTERVENTION_COST_PER_PT = 500
@@ -65,7 +65,7 @@ Both numbers are hardcoded without a citation comment. There is no source in the
 
 ## C. Survival `lambda` and exponential dropout timing
 
-**Current state.** [Model/model.ipynb](../Model/model.ipynb) line ~1614:
+**Current state.** [Model/model.ipynb](../../Model/model.ipynb) line ~1614:
 
 ```
 # Scale exponential so that ~dropout_rate% of patients drop by day 180

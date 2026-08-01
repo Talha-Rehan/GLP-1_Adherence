@@ -18,7 +18,7 @@ Week 7 is what is finished as of this writing.
 
 ## Convention alignment
 
-The plan proposes a `screens/ConsequenceModel/` folder and a separate `api/consequenceApi.js`. The existing project uses `pages/` + a single centralised `data/api.js` (see [Frontend/src/pages/BudgetSimulator.jsx](../Frontend/src/pages/BudgetSimulator.jsx) and [Frontend/src/data/api.js](../Frontend/src/data/api.js)). I followed the existing convention rather than the plan's suggested layout — this keeps the new screen structurally identical to Budget Simulator so a future maintainer doesn't have to learn two patterns.
+The plan proposes a `screens/ConsequenceModel/` folder and a separate `api/consequenceApi.js`. The existing project uses `pages/` + a single centralised `data/api.js` (see [Frontend/src/pages/BudgetSimulator.jsx](../../Frontend/src/pages/BudgetSimulator.jsx) and [Frontend/src/data/api.js](../../Frontend/src/data/api.js)). I followed the existing convention rather than the plan's suggested layout — this keeps the new screen structurally identical to Budget Simulator so a future maintainer doesn't have to learn two patterns.
 
 Final layout:
 
@@ -48,8 +48,8 @@ Frontend/src/
 The `GET /api/consequence/downstream-cost` response now includes a per-cluster `cost_by_driver_5yr` breakdown that Panel 1 needs for the stacked bar. Minimal change: aggregate `cost_share_esrd_5yr × expected_downstream_cost_5yr` per cluster (and same for CV, T2D) in the router, expose as `{ESRD, CV_event, Uncontrolled_T2D}` dict on each cluster. No Mongo re-migration required — the data was already in the `progression_cost` collection; the router just wasn't projecting it before.
 
 Backend files touched:
-- [Backend/schemas/consequence.py](../Backend/schemas/consequence.py) — added `cost_by_driver_5yr: Dict[str, float]` to `DownstreamCostCluster`
-- [Backend/routers/consequence.py](../Backend/routers/consequence.py) — aggregation logic in the same loop that already computed `sum5`, `sum_esrd`, etc.
+- [Backend/schemas/consequence.py](../../Backend/schemas/consequence.py) — added `cost_by_driver_5yr: Dict[str, float]` to `DownstreamCostCluster`
+- [Backend/routers/consequence.py](../../Backend/routers/consequence.py) — aggregation logic in the same loop that already computed `sum5`, `sum_esrd`, etc.
 
 Verified via curl against Mongo Atlas — Cluster 1 breakdown is `{ESRD: $232, CV_event: $5,428, Uncontrolled_T2D: $29,742}` per patient at 5 years. That composition is consistent with the Phase 1 sanity check (T2D-driven cluster).
 
@@ -94,11 +94,11 @@ The **scenario toggle** is where the payer insight lives. Switching from Early t
 - Added `AlertTriangle` icon import from `lucide-react`.
 - New `NAV_ITEMS` entry: `{ to: '/consequence', icon: AlertTriangle, label: 'Cost of Inaction', primary: 'insurer' }`.
 - Restructured sidebar sections: Overview (2), Analytics (2), **Financial (2 — Budget Simulator + Cost of Inaction)** with insurer badge. Previously "Financial" was commented out; it's now active.
-- New route registered in [App.jsx](../Frontend/src/App.jsx).
+- New route registered in [App.jsx](../../Frontend/src/App.jsx).
 
 ### Sidebar structure detail
 
-The `NAV_ITEMS` array in [components/layout/AppShell.jsx](../Frontend/src/components/layout/AppShell.jsx) is sliced into three sidebar sections by index range:
+The `NAV_ITEMS` array in [components/layout/AppShell.jsx](../../Frontend/src/components/layout/AppShell.jsx) is sliced into three sidebar sections by index range:
 
 | Section header | Slice | Items | Section labelling |
 |---|---|---|---|
@@ -150,7 +150,7 @@ Frontend `npx vite build` clean: 776 kB / 224 kB gzipped, no errors.
 
 ## Screen root architecture
 
-[pages/CostOfInaction/index.jsx](../Frontend/src/pages/CostOfInaction/index.jsx) is a single React component that composes the three panels vertically inside a scrollable viewport. Structure top-to-bottom:
+[pages/CostOfInaction/index.jsx](../../Frontend/src/pages/CostOfInaction/index.jsx) is a single React component that composes the three panels vertically inside a scrollable viewport. Structure top-to-bottom:
 
 ```
 <CostOfInaction>
@@ -195,7 +195,7 @@ React-router doesn't auto-scroll on route change. Navigating from another page t
 
 ## Shared components used
 
-The two new panels lean heavily on the pre-existing shared components from [Frontend/src/components/shared/index.jsx](../Frontend/src/components/shared/index.jsx) and [Frontend/src/components/shared/LoadingSkeleton.jsx](../Frontend/src/components/shared/LoadingSkeleton.jsx). Inventory:
+The two new panels lean heavily on the pre-existing shared components from [Frontend/src/components/shared/index.jsx](../../Frontend/src/components/shared/index.jsx) and [Frontend/src/components/shared/LoadingSkeleton.jsx](../../Frontend/src/components/shared/LoadingSkeleton.jsx). Inventory:
 
 | Component | Origin | Used by (Panel 1 / 2) | Purpose |
 |---|---|---|---|

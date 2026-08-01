@@ -28,14 +28,14 @@ Both are documented as v1 assumptions in [DATA_AND_MODEL_DOCUMENTATION.md](../DA
 
 | File | Purpose |
 |---|---|
-| [Model/consequence/roi.py](../Model/consequence/roi.py) | Pure ROI math. `ROIInputs`, `ROIOutput`, `compute_roi`, `annuity_factor`, `expected_drug_cost`, `break_even_adherence`, `time_to_positive_roi`, `population_roi`. No I/O. |
-| [Model/consequence/payer_roi.py](../Model/consequence/payer_roi.py) | Entry script. Runs Markov twice per patient (off-therapy at LBXGH, on-therapy at effective HbA1c), aggregates per cluster, applies ROI formula at horizons 1..5. Writes 2 CSVs. |
-| [Model/consequence/markov.py](../Model/consequence/markov.py) | Extended: new `on_therapy_glycemic_rr` field on `MarkovParams` applied to S0→S1 for on-therapy patients. Backwards-compatible (default 1.0). |
-| [Model/consequence/downstream_cost.py](../Model/consequence/downstream_cost.py) | Wires the new glycemic RR through `build_params`. |
-| [Model/consequence/tests/test_roi.py](../Model/consequence/tests/test_roi.py) | 23 new unit tests. Combined consequence test suite is now **73 tests, all green**. |
-| [Backend/schemas/consequence.py](../Backend/schemas/consequence.py) | Added `PayerROIHorizon`, `PayerROICluster`, `PayerROIResponse`. |
-| [Backend/routers/consequence.py](../Backend/routers/consequence.py) | Added `GET /api/consequence/payer-roi?intervention_cost=<usd>`. Slider drives server-side recompute; no new Mongo writes. |
-| [Backend/scripts/migrate_csv_to_mongo.py](../Backend/scripts/migrate_csv_to_mongo.py) | Added `migrate_payer_roi()` and `migrate_payer_roi_yearly()` with unique indexes. |
+| [Model/consequence/roi.py](../../Model/consequence/roi.py) | Pure ROI math. `ROIInputs`, `ROIOutput`, `compute_roi`, `annuity_factor`, `expected_drug_cost`, `break_even_adherence`, `time_to_positive_roi`, `population_roi`. No I/O. |
+| [Model/consequence/payer_roi.py](../../Model/consequence/payer_roi.py) | Entry script. Runs Markov twice per patient (off-therapy at LBXGH, on-therapy at effective HbA1c), aggregates per cluster, applies ROI formula at horizons 1..5. Writes 2 CSVs. |
+| [Model/consequence/markov.py](../../Model/consequence/markov.py) | Extended: new `on_therapy_glycemic_rr` field on `MarkovParams` applied to S0→S1 for on-therapy patients. Backwards-compatible (default 1.0). |
+| [Model/consequence/downstream_cost.py](../../Model/consequence/downstream_cost.py) | Wires the new glycemic RR through `build_params`. |
+| [Model/consequence/tests/test_roi.py](../../Model/consequence/tests/test_roi.py) | 23 new unit tests. Combined consequence test suite is now **73 tests, all green**. |
+| [Backend/schemas/consequence.py](../../Backend/schemas/consequence.py) | Added `PayerROIHorizon`, `PayerROICluster`, `PayerROIResponse`. |
+| [Backend/routers/consequence.py](../../Backend/routers/consequence.py) | Added `GET /api/consequence/payer-roi?intervention_cost=<usd>`. Slider drives server-side recompute; no new Mongo writes. |
+| [Backend/scripts/migrate_csv_to_mongo.py](../../Backend/scripts/migrate_csv_to_mongo.py) | Added `migrate_payer_roi()` and `migrate_payer_roi_yearly()` with unique indexes. |
 | [DATA_AND_MODEL_DOCUMENTATION.md](../DATA_AND_MODEL_DOCUMENTATION.md) | §10.2a Payer ROI Synthesizer section; limitations 19–23. |
 
 ---
@@ -74,8 +74,8 @@ The drug-cost formula is audit-compliant: dropout-cohort patients only pay for t
 
 | File | Rows | Purpose |
 |---|---|---|
-| [Backend/data/payer_roi.csv](../Backend/data/payer_roi.csv) | 4 | Per-cluster wide format. All horizons in one row. |
-| [Backend/data/payer_roi_yearly.csv](../Backend/data/payer_roi_yearly.csv) | 20 | Per-cluster × year long format. Powers the dashboard time-to-positive line chart. |
+| [Backend/data/payer_roi.csv](../../Backend/data/payer_roi.csv) | 4 | Per-cluster wide format. All horizons in one row. |
+| [Backend/data/payer_roi_yearly.csv](../../Backend/data/payer_roi_yearly.csv) | 20 | Per-cluster × year long format. Powers the dashboard time-to-positive line chart. |
 
 ---
 
@@ -185,7 +185,7 @@ Row per (cluster × horizon_year). Used by the dashboard's ROI trajectory line c
 
 ## Frontend integration — how Panel 3 consumes this endpoint
 
-Every field in the `PayerROIResponse` maps to a specific UI element on Panel 3 of the "Cost of Inaction" screen ([Frontend/src/pages/CostOfInaction/PayerROIPanel.jsx](../Frontend/src/pages/CostOfInaction/PayerROIPanel.jsx)). The mapping:
+Every field in the `PayerROIResponse` maps to a specific UI element on Panel 3 of the "Cost of Inaction" screen ([Frontend/src/pages/CostOfInaction/PayerROIPanel.jsx](../../Frontend/src/pages/CostOfInaction/PayerROIPanel.jsx)). The mapping:
 
 | Response field | Panel 3 UI element | How it's rendered |
 |---|---|---|

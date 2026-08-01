@@ -27,11 +27,11 @@ the fusion pipeline later combines into one patient-level training table.
 
 | Source | Role | Script | Key Output |
 |---|---|---|---|
-| **NHANES** (2017–2018 + 2021–2023 cycles) | Patient demographics + clinical baseline (BMI, HbA1c, BP, cholesterol, diabetes Dx) | [Data_Collection/NHANES/nhanes.py](Data_Collection/NHANES/nhanes.py) | `nhanes_clinical_baseline.csv` |
-| **MEPS** (H248A prescribed meds + H251 consolidated) | Real out-of-pocket cost + insurance coverage by demographics | [Data_Collection/MEPS/meps.py](Data_Collection/MEPS/meps.py) | `meps_glp1_cost_analysis.csv` |
-| **FAERS** (FDA openFDA event API) | Real-world adverse event frequency per GLP-1 generic | [Data_Collection/FAERS/fares.py](Data_Collection/FAERS/fares.py) | `faers_glp1_side_effects.csv` |
-| **ClinicalTrials.gov** API v2 (SUSTAIN, STEP, SURMOUNT families) | Trial-grade AE rates, baselines, outcomes | [Data_Collection/ClinicalTrials/clinical_trials.py](Data_Collection/ClinicalTrials/clinical_trials.py) | `trial_metadata.csv`, `trial_outcomes.csv`, `trial_adverse_events.csv`, `trial_baselines.csv` |
-| **CMS Medicare Part D** (Prescribers by Provider & Drug, 2023) | Prescriber-level refill continuity → system reliability signal | [Data_Collection/Medicare Part D Prescribers - by Provider and Drug/glp1_cms_processor.py](Data_Collection/Medicare%20Part%20D%20Prescribers%20-%20by%20Provider%20and%20Drug/glp1_cms_processor.py) | `glp1_cms_clean_v2.csv`, `summary_by_drug.csv`, `low_refill_prescribers.csv`, etc. |
+| **NHANES** (2017–2018 + 2021–2023 cycles) | Patient demographics + clinical baseline (BMI, HbA1c, BP, cholesterol, diabetes Dx) | [Data_Collection/NHANES/nhanes.py](../Data_Collection/NHANES/nhanes.py) | `nhanes_clinical_baseline.csv` |
+| **MEPS** (H248A prescribed meds + H251 consolidated) | Real out-of-pocket cost + insurance coverage by demographics | [Data_Collection/MEPS/meps.py](../Data_Collection/MEPS/meps.py) | `meps_glp1_cost_analysis.csv` |
+| **FAERS** (FDA openFDA event API) | Real-world adverse event frequency per GLP-1 generic | [Data_Collection/FAERS/fares.py](../Data_Collection/FAERS/fares.py) | `faers_glp1_side_effects.csv` |
+| **ClinicalTrials.gov** API v2 (SUSTAIN, STEP, SURMOUNT families) | Trial-grade AE rates, baselines, outcomes | [Data_Collection/ClinicalTrials/clinical_trials.py](../Data_Collection/ClinicalTrials/clinical_trials.py) | `trial_metadata.csv`, `trial_outcomes.csv`, `trial_adverse_events.csv`, `trial_baselines.csv` |
+| **CMS Medicare Part D** (Prescribers by Provider & Drug, 2023) | Prescriber-level refill continuity → system reliability signal | [Data_Collection/Medicare Part D Prescribers - by Provider and Drug/glp1_cms_processor.py](../Data_Collection/Medicare%20Part%20D%20Prescribers%20-%20by%20Provider%20and%20Drug/glp1_cms_processor.py) | `glp1_cms_clean_v2.csv`, `summary_by_drug.csv`, `low_refill_prescribers.csv`, etc. |
 
 ### 2.1 NHANES details
 - Two cycles combined because 2021–2023 alone yielded only ~3.4k eligible
@@ -84,7 +84,7 @@ the fusion pipeline later combines into one patient-level training table.
 ## 3. Fusion Pipeline (raw sources → ML-ready table)
 
 The fusion pipeline is intentionally split into stacked layers so each signal
-type can be debugged independently. All scripts live in [Fusion/](Fusion/).
+type can be debugged independently. All scripts live in [Fusion/](../Fusion/).
 
 ```
 NHANES + MEPS                   →  Layer 1  →  FUSION_LAYER_1.csv
@@ -94,7 +94,7 @@ NHANES + MEPS                   →  Layer 1  →  FUSION_LAYER_1.csv
 ```
 
 ### 3.1 Layer 1 — Patient baseline + cost
-File: [Fusion/layer_1.py](Fusion/layer_1.py)
+File: [Fusion/layer_1.py](../Fusion/layer_1.py)
 
 - **Eligibility filter (3 pathways, OR-combined):**
   1. BMI ≥ 30 (obesity indication)
@@ -113,7 +113,7 @@ File: [Fusion/layer_1.py](Fusion/layer_1.py)
   99th percentile.
 
 ### 3.2 Layer 2 — Biological friction
-File: [Fusion/layer_2.py](Fusion/layer_2.py)
+File: [Fusion/layer_2.py](../Fusion/layer_2.py)
 
 - FAERS: sums event frequency per drug → `real_world_risk` (max-normalized).
 - ClinicalTrials: filters AEs to GI terms (Nausea/Vomiting/Diarrhea/GI),
@@ -122,7 +122,7 @@ File: [Fusion/layer_2.py](Fusion/layer_2.py)
 - `bio_friction = (real_world_risk + ae_rate) / 2`, median-imputed for nulls.
 
 ### 3.3 Layer 3 — System reliability + drug generation
-File: [Fusion/layer_3.py](Fusion/layer_3.py)
+File: [Fusion/layer_3.py](../Fusion/layer_3.py)
 
 - Loads CMS `summary_by_drug.csv` and `low_refill_prescribers.csv`.
 - Brand→molecule mapping covers all brands actually present in CMS output
@@ -137,7 +137,7 @@ File: [Fusion/layer_3.py](Fusion/layer_3.py)
   3=tirzepatide) and `is_newer_drug = (drug_generation >= 2)`.
 
 ### 3.4 Final — Behavioral simulation
-File: [Fusion/final.py](Fusion/final.py)
+File: [Fusion/final.py](../Fusion/final.py)
 
 The `is_adherent` label is **simulated** from a transparent behavioral
 equation, then noise is added. This is deliberate: there is no public,
@@ -165,7 +165,7 @@ Output: `FINAL_GLP1_MODEL_DATA.csv` (16 columns, ~6.5k rows pre-cleanup).
 ## 4. Data Dictionary — `GLP1_CLEANED.csv` (model training input)
 
 This is the dataset that goes into the model after the cleanup notebook
-([Processing/cleanup.ipynb](Processing/cleanup.ipynb)) has run. Final shape:
+([Processing/cleanup.ipynb](../Processing/cleanup.ipynb)) has run. Final shape:
 **7,566 rows × 15 columns** (after underage drop, null imputation, BMI
 clipping, dead-column removal, and minority upsampling).
 
@@ -204,7 +204,7 @@ clipping, dead-column removal, and minority upsampling).
 
 ## 5. Model Training Pipeline
 
-File: [Model/model.ipynb](Model/model.ipynb)
+File: [Model/model.ipynb](../Model/model.ipynb)
 
 ### 5.1 Preprocessing
 - `assigned_molecule` one-hot encoded into `mol_DULAGLUTIDE`,
@@ -251,7 +251,7 @@ final_gb_model.pkl = {
 
 ## 6. Downstream Layers (built on top of the model)
 
-These are all inside [Model/model.ipynb](Model/model.ipynb), keep them in
+These are all inside [Model/model.ipynb](../Model/model.ipynb), keep them in
 mind as part of the “work done” when planning next steps — they consume the
 trained model and produce dashboard-ready CSVs.
 
@@ -406,8 +406,8 @@ and [evidence/markov_scope_decision.md](evidence/markov_scope_decision.md).
 - Annual cycle, 5-year primary horizon, 10-year sensitivity, 3% discount rate.
 - Outputs: per-patient `progression_cost.csv` (7,566 rows) with expected
   downstream cost at 5 and 10 years plus primary cost driver.
-- Code: [Model/consequence/downstream_cost.py](Model/consequence/downstream_cost.py),
-  [Model/consequence/markov.py](Model/consequence/markov.py).
+- Code: [Model/consequence/downstream_cost.py](../Model/consequence/downstream_cost.py),
+  [Model/consequence/markov.py](../Model/consequence/markov.py).
 - API: `GET /api/consequence/downstream-cost`.
 
 ### 10.2a Payer ROI Synthesizer (Phase 3)
@@ -432,8 +432,8 @@ and [evidence/markov_scope_decision.md](evidence/markov_scope_decision.md).
   - `payer_roi.csv` (per-cluster, 4 rows) — all horizons in wide format.
   - `payer_roi_yearly.csv` (per-cluster × year, 20 rows) — long format for
     the dashboard's time-to-positive line chart.
-- Code: [Model/consequence/payer_roi.py](Model/consequence/payer_roi.py),
-  [Model/consequence/roi.py](Model/consequence/roi.py).
+- Code: [Model/consequence/payer_roi.py](../Model/consequence/payer_roi.py),
+  [Model/consequence/roi.py](../Model/consequence/roi.py).
 - API: `GET /api/consequence/payer-roi?intervention_cost=<usd>` — ROI is
   recomputed server-side from the caller-supplied intervention cost so the
   dashboard slider works without persisting new documents to Mongo.
@@ -452,8 +452,8 @@ and [evidence/markov_scope_decision.md](evidence/markov_scope_decision.md).
   - `rebound_risk.csv` (per-patient, 7,566 rows)
   - `rebound_trajectory.csv` (per-cluster × scenario × month, 60 rows)
   - `rebound_sensitivity.csv` (per-cluster × scenario summary, 12 rows)
-- Code: [Model/consequence/rebound_risk.py](Model/consequence/rebound_risk.py),
-  [Model/consequence/rebound.py](Model/consequence/rebound.py).
+- Code: [Model/consequence/rebound_risk.py](../Model/consequence/rebound_risk.py),
+  [Model/consequence/rebound.py](../Model/consequence/rebound.py).
 - API: `GET /api/consequence/rebound-risk`.
 
 ### 10.3 Hardcoded parameters

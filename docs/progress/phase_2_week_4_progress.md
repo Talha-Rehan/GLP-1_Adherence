@@ -44,9 +44,9 @@ Added 11 new sourced rows to [evidence/parameter_registry.csv](../evidence/param
 
 | File | Purpose |
 |---|---|
-| [Model/consequence/rebound.py](../Model/consequence/rebound.py) | Pure trajectory + threshold logic. `ReboundParams` dataclass, `hba1c_trajectory`, `bmi_trajectory`, `dm_status_at_dropout`, `months_to_threshold`, `p_new_t2d_12mo`, `p_uncontrolled_12mo`, `rebound_severity_score`, `reduction_attained`. No I/O. |
-| [Model/consequence/rebound_risk.py](../Model/consequence/rebound_risk.py) | Entry script. Loads the registry + [Backend/data/GLP1_FINAL_WITH_SURVIVAL.csv](../Backend/data/GLP1_FINAL_WITH_SURVIVAL.csv), runs the 12-month projection per patient, writes [Backend/data/rebound_risk.csv](../Backend/data/rebound_risk.csv) (7,566 rows), prints per-cluster sanity summary. |
-| [Model/consequence/tests/test_rebound.py](../Model/consequence/tests/test_rebound.py) | 30 unit tests, all passing. Combined Phase 1 + Phase 2 test suite = **50 tests, all green**. |
+| [Model/consequence/rebound.py](../../Model/consequence/rebound.py) | Pure trajectory + threshold logic. `ReboundParams` dataclass, `hba1c_trajectory`, `bmi_trajectory`, `dm_status_at_dropout`, `months_to_threshold`, `p_new_t2d_12mo`, `p_uncontrolled_12mo`, `rebound_severity_score`, `reduction_attained`. No I/O. |
+| [Model/consequence/rebound_risk.py](../../Model/consequence/rebound_risk.py) | Entry script. Loads the registry + [Backend/data/GLP1_FINAL_WITH_SURVIVAL.csv](../../Backend/data/GLP1_FINAL_WITH_SURVIVAL.csv), runs the 12-month projection per patient, writes [Backend/data/rebound_risk.csv](../../Backend/data/rebound_risk.csv) (7,566 rows), prints per-cluster sanity summary. |
+| [Model/consequence/tests/test_rebound.py](../../Model/consequence/tests/test_rebound.py) | 30 unit tests, all passing. Combined Phase 1 + Phase 2 test suite = **50 tests, all green**. |
 
 ---
 
@@ -72,7 +72,7 @@ Added 11 new sourced rows to [evidence/parameter_registry.csv](../evidence/param
    threshold-crossing probability (30%).
 ```
 
-### Output: [rebound_risk.csv](../Backend/data/rebound_risk.csv) (7,566 rows)
+### Output: [rebound_risk.csv](../../Backend/data/rebound_risk.csv) (7,566 rows)
 
 Columns: `patient_idx`, `cluster`, `segment_short`, `assigned_molecule`, `lbxgh_baseline`, `bmxbmi_baseline`, `time_to_dropout_days`, `dm_status_at_dropout`, `hba1c_at_dropout`, `bmi_at_dropout`, `expected_hba1c_6mo`, `expected_hba1c_12mo`, `expected_bmi_6mo`, `expected_bmi_12mo`, `p_new_t2d_12mo`, `p_uncontrolled_12mo`, `months_to_t2d_threshold` (nullable for T2D patients), `rebound_severity_score`.
 
@@ -187,7 +187,7 @@ Backend/venv/Scripts/python.exe -m pytest Model/consequence/tests -v
 ## What's next — Week 5
 
 1. **Sensitivity analysis.** Per cluster, run the rebound projection at three dropout-timing scenarios: early (day 30 — from `survival_checkpoints.csv`), median (cluster median from KM), late (day 150). Output: extension to `rebound_risk.csv` (or a sidecar `rebound_sensitivity.csv`).
-2. **Backend endpoint.** `GET /api/consequence/rebound-risk` — extend [Backend/routers/consequence.py](../Backend/routers/consequence.py) and [Backend/schemas/consequence.py](../Backend/schemas/consequence.py); register in main.
-3. **Mongo migration.** Add a `migrate_rebound_risk()` step in [Backend/scripts/migrate_csv_to_mongo.py](../Backend/scripts/migrate_csv_to_mongo.py).
+2. **Backend endpoint.** `GET /api/consequence/rebound-risk` — extend [Backend/routers/consequence.py](../../Backend/routers/consequence.py) and [Backend/schemas/consequence.py](../../Backend/schemas/consequence.py); register in main.
+3. **Mongo migration.** Add a `migrate_rebound_risk()` step in [Backend/scripts/migrate_csv_to_mongo.py](../../Backend/scripts/migrate_csv_to_mongo.py).
 4. **Documentation update.** Section 10 entry in [DATA_AND_MODEL_DOCUMENTATION.md](../DATA_AND_MODEL_DOCUMENTATION.md) covering the rebound limitations enumerated above.
 5. **Phase 2 recap.** Combined `updates/phase_2_progress.md` consolidating Weeks 4–5.

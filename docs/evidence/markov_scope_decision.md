@@ -13,7 +13,7 @@ This memo records the choice and the rationale.
 
 ## Decision
 
-**Adopt Option A-extended (six states) as v1, with Option B as a configurable upgrade exposed via a config flag in [Model/consequence/downstream_cost.py](../Model/consequence/downstream_cost.py).**
+**Adopt Option A-extended (six states) as v1, with Option B as a configurable upgrade exposed via a config flag in [Model/consequence/downstream_cost.py](../../Model/consequence/downstream_cost.py).**
 
 The plan's literal Option A (two states) is too coarse for the dashboard's primary visual — the "primary cost driver" stacked bar in Phase 4 needs to distinguish ESRD, CV event, and uncontrolled-T2D costs. A pure two-state model collapses all three into one. So v1 will be:
 
@@ -89,7 +89,7 @@ These are sourced from SUSTAIN-6 / LEADER / FLOW trials (registry rows). They ar
 
 ## What this commits us to in Phase 1
 
-1. The script [Model/consequence/downstream_cost.py](../Model/consequence/downstream_cost.py) (to be created in Phase 1) will:
+1. The script [Model/consequence/downstream_cost.py](../../Model/consequence/downstream_cost.py) (to be created in Phase 1) will:
    - Build the 6×6 transition matrix from registry rows.
    - Stratify the S0→S1 probability per patient by baseline LBXGH (using the same thresholds as the plan: <5.7 / 5.7–6.4 / ≥6.5).
    - Roll the chain forward for `markov_default_horizon_years` (5) cycles, with a 10-year sensitivity output.

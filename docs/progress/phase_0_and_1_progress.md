@@ -31,7 +31,7 @@ Coverage:
 
 **File:** [evidence/cea_audit.md](../evidence/cea_audit.md)
 
-Pass/flag/fail audit of the existing CEA outputs ([Backend/data/cost_effectiveness.csv](../Backend/data/cost_effectiveness.csv), [Backend/data/budget_impact.csv](../Backend/data/budget_impact.csv), [Backend/data/icer_by_segment.csv](../Backend/data/icer_by_segment.csv)):
+Pass/flag/fail audit of the existing CEA outputs ([Backend/data/cost_effectiveness.csv](../../Backend/data/cost_effectiveness.csv), [Backend/data/budget_impact.csv](../../Backend/data/budget_impact.csv), [Backend/data/icer_by_segment.csv](../../Backend/data/icer_by_segment.csv)):
 
 | Item | Verdict | Action carried into later phases |
 |---|---|---|
@@ -70,13 +70,13 @@ CKD-stage granularity is gated behind a `MARKOV_GRANULARITY = "v1" | "v2"` flag 
 
 | File | Purpose |
 |---|---|
-| [Model/consequence/markov.py](../Model/consequence/markov.py) | Pure Markov logic. `MarkovParams` dataclass, `build_transition_matrix`, `run_markov`, `primary_cost_driver`. No I/O — re-usable for the Phase 3 on-therapy projection. |
-| [Model/consequence/downstream_cost.py](../Model/consequence/downstream_cost.py) | Script entry point. Loads parameter registry + [Backend/data/GLP1_FINAL_WITH_SURVIVAL.csv](../Backend/data/GLP1_FINAL_WITH_SURVIVAL.csv), runs the 5- and 10-year rollout per patient, writes [Backend/data/progression_cost.csv](../Backend/data/progression_cost.csv). Supports `payer_type="medicare"|"commercial"`. |
-| [Model/consequence/tests/test_markov.py](../Model/consequence/tests/test_markov.py) | **20 unit tests, all passing.** |
-| [Backend/routers/consequence.py](../Backend/routers/consequence.py) | `GET /api/consequence/downstream-cost` — aggregates per-cluster from Mongo `progression_cost` collection. |
-| [Backend/schemas/consequence.py](../Backend/schemas/consequence.py) | Pydantic response schemas. |
-| [Backend/main.py](../Backend/main.py) | Router registered. |
-| [Backend/scripts/migrate_csv_to_mongo.py](../Backend/scripts/migrate_csv_to_mongo.py) | Extended with `migrate_progression_cost()` step + `cluster` and `patient_idx` indexes. |
+| [Model/consequence/markov.py](../../Model/consequence/markov.py) | Pure Markov logic. `MarkovParams` dataclass, `build_transition_matrix`, `run_markov`, `primary_cost_driver`. No I/O — re-usable for the Phase 3 on-therapy projection. |
+| [Model/consequence/downstream_cost.py](../../Model/consequence/downstream_cost.py) | Script entry point. Loads parameter registry + [Backend/data/GLP1_FINAL_WITH_SURVIVAL.csv](../../Backend/data/GLP1_FINAL_WITH_SURVIVAL.csv), runs the 5- and 10-year rollout per patient, writes [Backend/data/progression_cost.csv](../../Backend/data/progression_cost.csv). Supports `payer_type="medicare"|"commercial"`. |
+| [Model/consequence/tests/test_markov.py](../../Model/consequence/tests/test_markov.py) | **20 unit tests, all passing.** |
+| [Backend/routers/consequence.py](../../Backend/routers/consequence.py) | `GET /api/consequence/downstream-cost` — aggregates per-cluster from Mongo `progression_cost` collection. |
+| [Backend/schemas/consequence.py](../../Backend/schemas/consequence.py) | Pydantic response schemas. |
+| [Backend/main.py](../../Backend/main.py) | Router registered. |
+| [Backend/scripts/migrate_csv_to_mongo.py](../../Backend/scripts/migrate_csv_to_mongo.py) | Extended with `migrate_progression_cost()` step + `cluster` and `patient_idx` indexes. |
 
 ### Markov model summary
 
@@ -89,7 +89,7 @@ CKD-stage granularity is gated behind a `MARKOV_GRANULARITY = "v1" | "v2"` flag 
   - `5.7 ≤ LBXGH < 6.5`  → enter S0, S0→S1 rate = 0.06/yr (pre-DM, DPP-derived)
   - `LBXGH ≥ 6.5`  → enter S1 (uncontrolled T2D at dropout)
 
-### Output: [progression_cost.csv](../Backend/data/progression_cost.csv) (7,566 rows)
+### Output: [progression_cost.csv](../../Backend/data/progression_cost.csv) (7,566 rows)
 
 Columns: `patient_idx`, `cluster`, `segment_short`, `lbxgh_baseline`, `bmxbmi_baseline`, `time_to_dropout_days`, `event_occurred`, `entry_state`, `entry_state_name`, `expected_downstream_cost_5yr`, `expected_downstream_cost_10yr`, `esrd_probability_5yr`, `death_probability_5yr`, `cv_event_probability_5yr`, `primary_cost_driver`, `cost_share_esrd_5yr`, `cost_share_cv_5yr`, `cost_share_uncontrolled_t2d_5yr`.
 
@@ -206,7 +206,7 @@ These were flagged in Phase 0 and remain open before Phase 3 (Payer ROI Synthesi
 
 ## Next up — Phase 2 (Weeks 4–5)
 
-Build [Model/consequence/rebound_risk.py](../Model/consequence/rebound_risk.py):
+Build [Model/consequence/rebound_risk.py](../../Model/consequence/rebound_risk.py):
 
 - Per-patient HbA1c rebound trajectory using `hba1c_rebound_rate_per_month` from the registry (0.18 HbA1c %/month, first 6 mo) and `hba1c_rebound_plateau_pct_of_loss` (0.66).
 - BMI rebound trajectory using `bmi_rebound_rate_per_month` (0.42 kg/m² per month) and `bmi_rebound_plateau_pct_of_loss` (0.67).

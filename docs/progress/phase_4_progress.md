@@ -15,7 +15,7 @@ Build the "Cost of Inaction" React screen: one route, three panels — Downstrea
 
 ## Convention alignment
 
-The plan proposes a `screens/ConsequenceModel/` folder and a separate `api/consequenceApi.js`. Existing project uses `pages/` + a single centralised `data/api.js` (see [Frontend/src/pages/BudgetSimulator.jsx](../Frontend/src/pages/BudgetSimulator.jsx)). Followed the existing convention rather than the plan's suggested layout — keeps the new screen structurally identical to Budget Simulator, so a future maintainer doesn't have to learn two patterns.
+The plan proposes a `screens/ConsequenceModel/` folder and a separate `api/consequenceApi.js`. Existing project uses `pages/` + a single centralised `data/api.js` (see [Frontend/src/pages/BudgetSimulator.jsx](../../Frontend/src/pages/BudgetSimulator.jsx)). Followed the existing convention rather than the plan's suggested layout — keeps the new screen structurally identical to Budget Simulator, so a future maintainer doesn't have to learn two patterns.
 
 ---
 
@@ -287,7 +287,7 @@ Two follow-up extensions landed on Panel 3 after the initial Week-8 pass, driven
 
 - **`payer_roi.py`** `YEARLY_HORIZONS` extended from `(1..5)` to `(1..10)`. `PRIMARY_HORIZONS` (used by the bar chart and per-cluster reporting) extended from `(1, 3, 5)` to `(1, 3, 5, 10)`.
 - **Backend**: `PayerROICluster` schema now carries a `yearly_roi_series: List[PayerROIYearlyPoint]` (10 points, year 1..10) alongside the primary horizons list. `population_roi_10yr` added. `time_to_positive_roi_years` now interpolates across all 10 years (previously 5).
-- **Frontend**: new [ROITrajectoryChart.jsx](../Frontend/src/components/charts/ROITrajectoryChart.jsx) — line chart, 1 line per cluster, x = year 1..10, y = ROI, green dashed reference at ROI=0. Renders below the grouped bar chart on Panel 3.
+- **Frontend**: new [ROITrajectoryChart.jsx](../../Frontend/src/components/charts/ROITrajectoryChart.jsx) — line chart, 1 line per cluster, x = year 1..10, y = ROI, green dashed reference at ROI=0. Renders below the grouped bar chart on Panel 3.
 - **Per-cluster cards** grew a **10-year cost-coverage bar** — visual progress bar showing what fraction of cumulative drug cost is offset by avoided complications at year 10. Colour-graded red (<50%) → amber (50–99%) → green (≥100%). This is the honest "how close to break-even" signal that doesn't depend on the mathematically-brittle break-even-α approximation.
 - The `ROI` badge on each per-cluster card became a pair — showing 5-yr AND 10-yr side by side.
 
@@ -312,14 +312,14 @@ Cluster 3's 47% is the "closest to payoff" number under today's economics. To fl
   - [`medicare_2028.csv`](../evidence/overrides/medicare_2028.csv) — projected CMS-negotiated GLP-1 prices (~65% off WAC, based on the observed discount in the 2026 negotiation results). Sets `glp1_payer_net_rebate_fraction=0` to avoid double-discounting.
   - [`post_generic.csv`](../evidence/overrides/post_generic.csv) — projected biosimilar pricing (2032+ post-patent expiry). Semaglutide $1,500/yr, tirzepatide $1,750/yr, older molecules ~$900/yr.
   - [`README.md`](../evidence/overrides/README.md) — pattern documentation.
-- **[Model/consequence/registry.py](../Model/consequence/registry.py)** (new) — shared `load_registry(payer_type)` loader that reads the base then merges any override with matching parameter names. Both `downstream_cost.py` and `payer_roi.py` now import from here — single source of truth for registry loading.
+- **[Model/consequence/registry.py](../../Model/consequence/registry.py)** (new) — shared `load_registry(payer_type)` loader that reads the base then merges any override with matching parameter names. Both `downstream_cost.py` and `payer_roi.py` now import from here — single source of truth for registry loading.
 - **`payer_roi.py`** refactored: `main()` iterates all scenarios discovered by `available_payer_types()` and writes tagged CSVs (`payer_roi.csv` = 12 rows × payer_type-tagged, `payer_roi_yearly.csv` = 120 rows). Cost of a new scenario = one CSV; no code path change.
 - **Migration** — compound unique indexes on `(payer_type, cluster)` and `(payer_type, cluster, horizon_years)`.
 - **Backend**:
   - `GET /api/consequence/payer-scenarios` — discovery endpoint. Returns `{scenarios: [...], default: 'current'}` so the frontend doesn't hardcode the list.
   - `GET /api/consequence/payer-roi?payer_type=<id>&intervention_cost=<usd>` — filter added, unknown types fall back to `current`.
 - **Frontend**:
-  - [`usePayerROI(interventionCost, payerType)`](../Frontend/src/hooks/usePayerROI.js) — hook now debounces on either input.
+  - [`usePayerROI(interventionCost, payerType)`](../../Frontend/src/hooks/usePayerROI.js) — hook now debounces on either input.
   - Panel 3 gained a **Pricing scenario** segmented control in the section header (Radix-style, 3 buttons).
   - Framing banner copy is scenario-specific (`current` → "negative, here's why"; `medicare_2028` → "approaching zero"; `post_generic` → "3 of 4 clusters flip positive by year 3–7").
 
@@ -390,7 +390,7 @@ Values under `post_generic`: 1-yr = **−1.28**, 5-yr = **−0.07**, 10-yr = **+
 
 ### ROI grouped bar chart
 
-Component: [ROIBarChart.jsx](../Frontend/src/components/charts/ROIBarChart.jsx). 4 clusters on the x-axis, 4 grouped bars per cluster.
+Component: [ROIBarChart.jsx](../../Frontend/src/components/charts/ROIBarChart.jsx). 4 clusters on the x-axis, 4 grouped bars per cluster.
 
 | Series | Colour | Data source |
 |---|---|---|
@@ -407,7 +407,7 @@ Reading the chart:
 
 ### ROI trajectory line chart
 
-Component: [ROITrajectoryChart.jsx](../Frontend/src/components/charts/ROITrajectoryChart.jsx). 4 lines (one per cluster), x = year 1..10, y = ROI.
+Component: [ROITrajectoryChart.jsx](../../Frontend/src/components/charts/ROITrajectoryChart.jsx). 4 lines (one per cluster), x = year 1..10, y = ROI.
 
 | Element | Source | Interpretation |
 |---|---|---|

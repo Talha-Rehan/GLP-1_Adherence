@@ -5,7 +5,7 @@ Pure functions only — no I/O, no DataFrame ops. All parameters arrive via
 the MarkovParams dataclass so the same logic can be re-used for the on-therapy
 projection in the Payer ROI Synthesizer (Phase 3).
 
-States (see evidence/markov_scope_decision.md):
+States (see docs/evidence/markov_scope_decision.md):
     S0 — Controlled glycemia (HbA1c < 7 OR on therapy)
     S1 — Uncontrolled T2D
     S2 — CKD / nephropathy

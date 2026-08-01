@@ -4,9 +4,9 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        display: ['"DM Serif Display"', 'Georgia', 'serif'],
-        body: ['"IBM Plex Sans"', 'system-ui', 'sans-serif'],
-        mono: ['"IBM Plex Mono"', 'monospace'],
+        display: ['Arial', 'Helvetica', 'sans-serif'],
+        body: ['Arial', 'Helvetica', 'sans-serif'],
+        mono: ['Arial', 'Helvetica', 'sans-serif'],
       },
       colors: {
         primary: { DEFAULT: '#1B4F8A', light: '#2E6DB4', dark: '#0F2D4F' },

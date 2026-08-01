@@ -28,8 +28,8 @@ from schemas.consequence import (
 )
 
 _DEFAULT_INTERVENTION_COST = 500.0
-_DEFAULT_ADHERENCE_UPLIFT = 0.15   # from evidence/parameter_registry.csv → dropout_reduction_relative_assumed
-_DISCOUNT_RATE = 0.03              # from evidence/parameter_registry.csv → discount_rate_annual
+_DEFAULT_ADHERENCE_UPLIFT = 0.15   # from docs/evidence/parameter_registry.csv → dropout_reduction_relative_assumed
+_DISCOUNT_RATE = 0.03              # from docs/evidence/parameter_registry.csv → discount_rate_annual
 _PRIMARY_HORIZONS = (1, 3, 5, 10)
 _YEARLY_HORIZONS = tuple(range(1, 11))
 
@@ -294,7 +294,7 @@ async def get_payer_roi(
     ),
     payer_type: str = Query(
         "current",
-        description="Pricing scenario: 'current', 'medicare_2028', 'post_generic', or any file stem present in evidence/overrides/.",
+        description="Pricing scenario: 'current', 'medicare_2028', 'post_generic', or any file stem present in docs/evidence/overrides/.",
     ),
     adherence_uplift: float = Query(
         _DEFAULT_ADHERENCE_UPLIFT,

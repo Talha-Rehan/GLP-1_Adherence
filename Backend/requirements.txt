@@ -1,3 +1,4 @@
+# --- Backend runtime (FastAPI + Mongo + model loading) ---
 fastapi==0.115.0
 uvicorn[standard]==0.30.0
 pandas==2.2.0
@@ -10,3 +11,14 @@ pydantic==2.7.0
 pydantic-settings==2.3.0
 motor==3.5.0
 pymongo==4.8.0
+
+# --- Tests (Model/consequence/tests/) ---
+pytest==9.1.0
+
+# --- Notebooks (Model/model.ipynb, Processing/cleanup.ipynb) ---
+matplotlib==3.10.9
+seaborn==0.13.2
+
+# --- Offline data collectors (Data_Collection/) ---
+requests==2.34.2
+openpyxl==3.1.5

@@ -2,8 +2,8 @@
 Layered parameter-registry loader for the Consequence Model.
 
 Design:
-    Base:      evidence/parameter_registry.csv       (default = "current" scenario)
-    Override:  evidence/overrides/{payer_type}.csv   (sparse — only rows that differ)
+    Base:      docs/evidence/parameter_registry.csv       (default = "current" scenario)
+    Override:  docs/evidence/overrides/{payer_type}.csv   (sparse — only rows that differ)
     Merge:     for each row in override, replace matching parameter_name in base.
 
 This keeps clinical parameters (Markov transitions, GLP-1 relative risks, rebound
@@ -21,8 +21,8 @@ import pandas as pd
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-BASE_REGISTRY_PATH = PROJECT_ROOT / "evidence" / "parameter_registry.csv"
-OVERRIDES_DIR = PROJECT_ROOT / "evidence" / "overrides"
+BASE_REGISTRY_PATH = PROJECT_ROOT / "docs" / "evidence" / "parameter_registry.csv"
+OVERRIDES_DIR = PROJECT_ROOT / "docs" / "evidence" / "overrides"
 
 DEFAULT_PAYER_TYPE = "current"
 
@@ -32,7 +32,7 @@ def load_registry(payer_type: str = DEFAULT_PAYER_TYPE) -> Dict[str, float]:
 
     Args:
         payer_type: `"current"` (base only) or the stem of a CSV in
-            `evidence/overrides/`. Unknown payer types fall back to base with
+            `docs/evidence/overrides/`. Unknown payer types fall back to base with
             a warning printed to stdout — this fails soft in dashboards but
             loud in dev.
 

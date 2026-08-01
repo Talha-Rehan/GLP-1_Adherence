@@ -4,6 +4,8 @@
 **/*.pyo
 **/*.pyd
 *.egg-info/
+.pytest_cache/
+**/.pytest_cache/
 
 # Virtual environments
 venv/
@@ -15,10 +17,9 @@ Backend/venv/
 .env
 .env.local
 
-# Data files (large / generated)
-Backend/data/*.csv
-Backend/data/*.npy
-Backend/data/*.pkl
+# Data files: pipeline artifacts (CSVs, model .pkl, SHAP .npy) are committed
+# under Backend/data/ so a fresh clone can seed Mongo without regenerating the
+# whole pipeline. Regenerate via Model/model.ipynb + Model/consequence/*.py.
 
 # Node / Frontend
 node_modules/
@@ -27,6 +28,9 @@ dist/
 # IDE
 .vscode/
 .idea/
+
+# Claude Code per-user settings (not shared)
+.claude/settings.local.json
 
 # OS
 .DS_Store

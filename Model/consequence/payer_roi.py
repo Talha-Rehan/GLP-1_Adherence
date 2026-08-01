@@ -8,7 +8,7 @@ and time-to-positive ROI.
 
 Reads:
     Backend/data/GLP1_FINAL_WITH_SURVIVAL.csv   (patients, time_to_dropout, molecule)
-    evidence/parameter_registry.csv             (transitions, costs, efficacy)
+    docs/evidence/parameter_registry.csv             (transitions, costs, efficacy)
 
 Writes:
     Backend/data/payer_roi.csv                  (per-cluster ROI, 4 rows)
@@ -271,7 +271,7 @@ def main(
 
     If `payer_types` is None, iterates all scenarios discovered by
     `available_payer_types()` — the default (`current`) plus every CSV in
-    `evidence/overrides/`.
+    `docs/evidence/overrides/`.
     """
     if payer_types is None:
         payer_types = available_payer_types()

@@ -1,12 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import * as Slider from '@radix-ui/react-slider';
-import { DollarSign, TrendingUp, Target, Building2 } from 'lucide-react';
-import { SectionHeader, KPICard } from '../../components/shared';
-import { SkeletonCard, SkeletonChart } from '../../components/shared/LoadingSkeleton';
-import { SEGMENT_COLORS, SEGMENT_SHORT } from '../../data/mockData';
+import { Building2 } from 'lucide-react';
+import { SectionHeader } from '../../components/shared';
+import { SkeletonChart } from '../../components/shared/LoadingSkeleton';
 import ROIBarChart from '../../components/charts/ROIBarChart';
 import ROITrajectoryChart from '../../components/charts/ROITrajectoryChart';
 import { usePayerROI } from '../../hooks/usePayerROI';
+import { DEMO_POST_GENERIC_MODE } from '../../data/config';
 
 const fmtMoney = (n) => {
   if (!Number.isFinite(n)) return '—';
@@ -18,6 +18,7 @@ const fmtMoney = (n) => {
 };
 const fmtPct  = (n) => Number.isFinite(n) ? `${(n * 100).toFixed(1)}%` : '—';
 const fmtROIx = (n) => Number.isFinite(n) ? `${n.toFixed(2)}×` : '—';
+const fmtInt  = (n) => Number.isFinite(n) ? Math.round(n).toLocaleString() : '—';
 
 const PAYER_SCENARIOS = [
   { id: 'current',       label: 'Current (2025)' },
@@ -25,23 +26,103 @@ const PAYER_SCENARIOS = [
   { id: 'post_generic',  label: 'Post-generic 2032+' },
 ];
 
-// intervention_roi_net incorporates the extra drug spend from higher adherence,
-// so it actually responds to payer_type (cheaper drugs = better net return).
 const ROI_FIELD = 'intervention_roi_net';
+
+// Dark hero palette
+const HERO_BG        = '#0A1F3D';
+const HERO_ACCENT    = '#5EEAD4';
+const HERO_NEGATIVE  = '#FCA5A5';
+const HERO_LABEL     = 'rgba(255,255,255,0.5)';
+const HERO_MUTED     = 'rgba(255,255,255,0.7)';
+const HERO_DIVIDER   = 'rgba(255,255,255,0.08)';
+
+/**
+ * Smoothly count from the current displayed value to `target`.
+ * Uses easeOutCubic. Returns the intermediate value; the component formats it.
+ */
+function useCountUp(target, duration = 700) {
+  const [value, setValue] = useState(Number.isFinite(target) ? 0 : target);
+  const currentRef = useRef(0);
+
+  useEffect(() => {
+    if (!Number.isFinite(target)) {
+      setValue(target);
+      return;
+    }
+    const from  = currentRef.current;
+    const start = performance.now();
+    let raf;
+    const step = (t) => {
+      const p = Math.min(1, (t - start) / duration);
+      const eased = 1 - Math.pow(1 - p, 3);
+      const cur = from + (target - from) * eased;
+      currentRef.current = cur;
+      setValue(cur);
+      if (p < 1) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [target, duration]);
+
+  return value;
+}
+
+/**
+ * Premium slider for the dark hero band — teal range, white thumb, muted labels.
+ */
+function ControlSlider({ label, value, valueDisplay, onChange, min, max, step, ticks }) {
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex items-baseline justify-between">
+        <span className="text-[11px] uppercase tracking-[0.14em] font-medium" style={{ color: HERO_LABEL }}>{label}</span>
+        <span className="font-display text-lg text-white tabular-nums">{valueDisplay}</span>
+      </div>
+      <Slider.Root
+        className="relative flex items-center select-none touch-none w-full h-5"
+        min={min} max={max} step={step}
+        value={[value]}
+        onValueChange={([v]) => onChange(v)}
+      >
+        <Slider.Track className="relative grow h-[3px] rounded-full" style={{ background: 'rgba(255,255,255,0.12)' }}>
+          <Slider.Range className="absolute h-full rounded-full transition-colors" style={{ background: HERO_ACCENT }} />
+        </Slider.Track>
+        <Slider.Thumb
+          className="block w-4 h-4 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-transparent transition-transform hover:scale-110"
+          style={{
+            background: '#FFFFFF',
+            border: `2px solid ${HERO_ACCENT}`,
+            boxShadow: `0 0 0 3px rgba(94,234,212,0.15), 0 2px 6px rgba(0,0,0,0.4)`,
+          }}
+          aria-label={label}
+        />
+      </Slider.Root>
+      <div className="flex justify-between text-[10px] tabular-nums font-medium" style={{ color: 'rgba(255,255,255,0.35)' }}>
+        {ticks.map((t, i) => <span key={i}>{t}</span>)}
+      </div>
+    </div>
+  );
+}
 
 export default function PayerROIPanel() {
   const [interventionCost, setInterventionCost] = useState(500);
-  const [payerType,        setPayerType]        = useState('current');
+  const [payerType,        setPayerType]        = useState(DEMO_POST_GENERIC_MODE ? 'post_generic' : 'current');
   const [adherenceUplift,  setAdherenceUplift]  = useState(0.15);
   const { data, loading, error } = usePayerROI(interventionCost, payerType, adherenceUplift);
 
-  const clusters  = data?.by_cluster ?? [];
-  const nTotal    = data?.n_patients_total ?? 0;
-  const pop5      = data?.population_intervention_roi_net_5yr;
-  const pop10     = data?.population_intervention_roi_net_10yr;
+  const clusters    = data?.by_cluster ?? [];
+  const nTotal      = data?.n_patients_total ?? 0;
+  const pop5        = data?.population_intervention_roi_net_5yr;
+  const pop10       = data?.population_intervention_roi_net_10yr;
   const avgDrugCost = clusters.length
     ? clusters.reduce((s, c) => s + c.avg_annual_drug_cost, 0) / clusters.length
     : null;
+
+  const heroCU = useCountUp(Number.isFinite(pop10)        ? pop10        : 0);
+  const pop5CU = useCountUp(Number.isFinite(pop5)         ? pop5         : 0);
+  const drugCU = useCountUp(Number.isFinite(avgDrugCost)  ? avgDrugCost  : 0);
+  const ptsCU  = useCountUp(nTotal);
+
+  const heroColor = pop10 >= 0 ? HERO_ACCENT : HERO_NEGATIVE;
 
   if (error) {
     return (
@@ -54,178 +135,126 @@ export default function PayerROIPanel() {
     );
   }
 
+  const heroValue = loading && !data ? '—' : fmtROIx(heroCU);
+
   return (
-    <div className="space-y-4">
-      <div className="card p-5">
-        <SectionHeader
-          title="Payer ROI by Cluster"
-          sub="Net return on adherence program spend — medical savings minus extra drug cost, per $1 of program spend"
-          action={
-            <div className="flex items-center gap-2">
-              <Building2 size={13} className="text-gray-400" />
-              <div className="flex items-center gap-1 rounded-lg p-1" style={{ background: '#F7FAFC' }}>
-                {PAYER_SCENARIOS.map(s => (
-                  <button key={s.id} onClick={() => setPayerType(s.id)}
-                    className="px-2.5 py-1 rounded-md text-xs font-semibold transition-all"
-                    style={{
-                      background: payerType === s.id ? 'var(--color-primary)' : 'transparent',
-                      color:      payerType === s.id ? 'white' : 'var(--text-secondary)',
-                    }}>
-                    {s.label}
-                  </button>
-                ))}
+    <div className="space-y-5">
+      {/* ═══ Main card ════════════════════════════════════════════════════ */}
+      <div className="card overflow-hidden p-0 animate-fade-up">
+
+        {/* ── Top row: dark hero (left) + dark sliders (right) ─────────── */}
+        <div className="grid grid-cols-12" style={{ background: HERO_BG }}>
+
+          {/* Hero panel */}
+          <div className="col-span-5 px-8 py-9 flex flex-col"
+               style={{ borderRight: `1px solid ${HERO_DIVIDER}` }}>
+            <div>
+              <h2 className="font-display text-lg font-semibold text-white leading-tight">Payer ROI</h2>
+              <p className="text-xs mt-1 leading-relaxed" style={{ color: HERO_MUTED }}>
+                Net return on adherence program spend — medical savings minus extra drug cost, per $1 invested.
+              </p>
+            </div>
+
+            {!DEMO_POST_GENERIC_MODE && (
+              <div className="mt-4 flex items-center gap-2">
+                <Building2 size={12} style={{ color: HERO_LABEL }} />
+                <div className="flex items-center rounded-lg p-0.5" style={{ background: 'rgba(255,255,255,0.06)' }}>
+                  {PAYER_SCENARIOS.map(s => (
+                    <button key={s.id} onClick={() => setPayerType(s.id)}
+                      className="px-2.5 py-1 rounded-md text-[10px] font-semibold transition-all"
+                      style={{
+                        background: payerType === s.id ? 'rgba(255,255,255,0.12)' : 'transparent',
+                        color:      payerType === s.id ? 'white' : HERO_LABEL,
+                      }}>
+                      {s.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Hero metric */}
+            <div className="mt-8 animate-fade-up" style={{ animationDelay: '0.08s' }}>
+              <div className="text-[10px] uppercase tracking-[0.18em] font-semibold mb-4" style={{ color: HERO_LABEL }}>
+                10-year population Net ROI
+              </div>
+              <div className="flex items-baseline gap-3">
+                <span className="font-display font-semibold leading-none tabular-nums transition-colors"
+                      style={{ color: heroColor, fontSize: '4rem' }}>
+                  {heroValue}
+                </span>
+                <span className="text-[11px] font-medium leading-relaxed" style={{ color: HERO_MUTED }}>
+                  on every $1<br />of program spend
+                </span>
               </div>
             </div>
-          }
-        />
 
-        {/* Sliders */}
-        <div className="grid grid-cols-2 gap-4 mt-1 mb-5">
-          <div className="rounded-xl p-4" style={{ background: '#F7FAFC' }}>
-            <div className="flex items-center justify-between mb-3">
-              <label className="text-sm font-semibold text-gray-700">Program cost / patient</label>
-              <span className="font-display font-semibold text-xl" style={{ color: 'var(--color-primary)' }}>
-                {fmtMoney(interventionCost)}<span className="text-[11px] text-gray-400 font-normal ml-1">/ yr</span>
-              </span>
+            {/* Supporting stats */}
+            <div className="mt-8 pt-6 grid grid-cols-3 gap-4 animate-fade-up"
+                 style={{ borderTop: `1px solid ${HERO_DIVIDER}`, animationDelay: '0.16s' }}>
+              <DarkStat label="5-yr ROI"    value={loading && !data ? '—' : fmtROIx(pop5CU)}  color={pop5 >= 0 ? HERO_ACCENT : HERO_NEGATIVE} />
+              <DarkStat label="Avg drug/yr" value={loading && !data ? '—' : fmtMoney(drugCU)} color="#FFFFFF" />
+              <DarkStat label="Patients"    value={loading && !data ? '—' : fmtInt(ptsCU)}    color="#FFFFFF" />
             </div>
-            <Slider.Root
-              className="relative flex items-center select-none touch-none w-full h-6"
+          </div>
+
+          {/* Sliders panel — same dark bg */}
+          <div className="col-span-7 px-10 py-9 flex flex-col justify-center gap-9 animate-fade-up"
+               style={{ animationDelay: '0.24s' }}>
+
+            <ControlSlider
+              label="Program cost per patient"
+              value={interventionCost}
+              valueDisplay={<>{fmtMoney(interventionCost)}<span className="text-xs font-normal ml-1" style={{ color: HERO_LABEL }}>/ yr</span></>}
+              onChange={setInterventionCost}
               min={0} max={3000} step={50}
-              value={[interventionCost]}
-              onValueChange={([v]) => setInterventionCost(v)}
-            >
-              <Slider.Track className="relative grow h-1.5 rounded-full" style={{ background: '#E2E8F0' }}>
-                <Slider.Range className="absolute h-full rounded-full" style={{ background: 'var(--color-primary)' }} />
-              </Slider.Track>
-              <Slider.Thumb
-                className="block w-4 h-4 rounded-full shadow-md focus:outline-none focus:ring-2 focus:ring-blue-300"
-                style={{ background: 'var(--color-primary)', border: '2px solid white' }}
-                aria-label="Program cost"
-              />
-            </Slider.Root>
-            <div className="flex justify-between text-[10px] text-gray-400 mt-1">
-              <span>$0</span><span>$1,500</span><span>$3,000</span>
-            </div>
-          </div>
-
-          <div className="rounded-xl p-4" style={{ background: '#F0FDF4' }}>
-            <div className="flex items-center justify-between mb-3">
-              <label className="text-sm font-semibold text-gray-700">Adherence uplift (Δα)</label>
-              <span className="font-display font-semibold text-xl" style={{ color: '#16A34A' }}>
-                +{fmtPct(adherenceUplift)}
-              </span>
-            </div>
-            <Slider.Root
-              className="relative flex items-center select-none touch-none w-full h-6"
+              ticks={['$0', '$1.5K', '$3K']}
+            />
+            <ControlSlider
+              label="Adherence uplift from program"
+              value={adherenceUplift}
+              valueDisplay={<>+{fmtPct(adherenceUplift)}<span className="text-xs font-normal ml-1" style={{ color: HERO_LABEL }}>of patients</span></>}
+              onChange={setAdherenceUplift}
               min={0} max={0.5} step={0.01}
-              value={[adherenceUplift]}
-              onValueChange={([v]) => setAdherenceUplift(v)}
-            >
-              <Slider.Track className="relative grow h-1.5 rounded-full" style={{ background: '#DCFCE7' }}>
-                <Slider.Range className="absolute h-full rounded-full" style={{ background: '#16A34A' }} />
-              </Slider.Track>
-              <Slider.Thumb
-                className="block w-4 h-4 rounded-full shadow-md focus:outline-none focus:ring-2 focus:ring-green-300"
-                style={{ background: '#16A34A', border: '2px solid white' }}
-                aria-label="Adherence uplift"
-              />
-            </Slider.Root>
-            <div className="flex justify-between text-[10px] text-gray-400 mt-1">
-              <span>0%</span><span>+25%</span><span>+50%</span>
-            </div>
+              ticks={['0%', '+25%', '+50%']}
+            />
           </div>
         </div>
 
-        {/* KPI strip */}
-        <div className="grid grid-cols-3 gap-4 mb-5">
-          {loading && !data ? (
-            <><SkeletonCard h={100} /><SkeletonCard h={100} /><SkeletonCard h={100} /></>
-          ) : (
-            <>
-              <KPICard label="Population 5-yr Net ROI"
-                value={fmtROIx(pop5)}
-                sub={`${nTotal.toLocaleString()} patients`}
-                icon={Target} color={pop5 >= 0 ? '#2E7D32' : '#C62828'} />
-              <KPICard label="Population 10-yr Net ROI"
-                value={fmtROIx(pop10)}
-                sub="Long-horizon program return"
-                icon={TrendingUp} color={pop10 >= 0 ? '#2E7D32' : '#EF6C00'} />
-              <KPICard label="Avg annual drug cost"
-                value={fmtMoney(avgDrugCost)}
-                sub={`+${fmtPct(adherenceUplift)} uplift · ${fmtMoney(interventionCost)}/pt program`}
-                icon={DollarSign} color="#1D4ED8" />
-            </>
-          )}
+        {/* ── Full-width bar chart section ─────────────────────────────── */}
+        <div className="px-8 py-8 border-t border-gray-100">
+          <div className="mb-4 animate-fade-up" style={{ animationDelay: '0.32s' }}>
+            <div className="text-sm font-semibold text-gray-900">Net ROI by cluster</div>
+            <div className="text-[11px] text-gray-400 mt-0.5">At 1, 3, 5, and 10-year horizons</div>
+          </div>
+          <div className="animate-fade-up" style={{ animationDelay: '0.4s' }}>
+            {loading && !data
+              ? <SkeletonChart h={280} />
+              : <ROIBarChart data={clusters} height={280} roiField={ROI_FIELD} />}
+          </div>
         </div>
-
-        {/* Bar chart */}
-        <div className="text-sm font-semibold text-gray-700 mb-2">
-          Net ROI at 1 / 3 / 5 / 10-year horizons, by cluster
-        </div>
-        {loading && !data
-          ? <SkeletonChart h={300} />
-          : <ROIBarChart data={clusters} height={300} roiField={ROI_FIELD} />}
       </div>
 
-      {/* Trajectory chart */}
-      <div className="card p-5">
-        <div className="text-sm font-semibold text-gray-700 mb-0.5">10-year Net ROI trajectory</div>
-        <div className="text-[11px] text-gray-400 mb-3">Per-year net return by cluster — lower drug prices shift all lines upward.</div>
+      {/* ═══ Trajectory card ═══════════════════════════════════════════════ */}
+      <div className="card p-8 animate-fade-up" style={{ animationDelay: '0.48s' }}>
+        <div className="mb-6">
+          <div className="text-sm font-semibold text-gray-900">10-year Net ROI trajectory</div>
+          <div className="text-[11px] text-gray-400 mt-0.5">Per-year return by cluster — steeper slopes indicate faster payoff</div>
+        </div>
         {loading && !data
           ? <SkeletonChart h={300} />
           : <ROITrajectoryChart data={clusters} height={300} roiField={ROI_FIELD} />}
       </div>
+    </div>
+  );
+}
 
-      {/* Cluster cards */}
-      <div className="grid grid-cols-4 gap-4">
-        {loading && !data
-          ? Array.from({ length: 4 }, (_, i) => <SkeletonCard key={i} h={180} />)
-          : clusters.map((c, i) => {
-              const h5  = c.horizons?.find(h => h.horizon_years === 5);
-              const h10 = c.horizons?.find(h => h.horizon_years === 10);
-              const roi5  = h5?.[ROI_FIELD] ?? null;
-              const roi10 = h10?.[ROI_FIELD] ?? null;
-              const alphaBase = c.adherence_probability ?? 0;
-              const alphaWith = c.adherence_with_program ?? alphaBase;
-
-              return (
-                <div key={c.cluster_id} className="card p-4 animate-fade-up"
-                     style={{ animationDelay: `${i * 0.05}s`, borderTop: `3px solid ${SEGMENT_COLORS[c.cluster_id]}` }}>
-                  <div className="text-[10px] font-bold uppercase tracking-wider mb-0.5"
-                       style={{ color: SEGMENT_COLORS[c.cluster_id] }}>
-                    Cluster {c.cluster_id}
-                  </div>
-                  <div className="text-xs text-gray-600 mb-3">{c.cluster_label ?? SEGMENT_SHORT[c.cluster_id]}</div>
-
-                  <div className="flex gap-2 mb-3">
-                    <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold"
-                          style={{ background: roi5 >= 0 ? '#E8F5E9' : '#FFEBEE', color: roi5 >= 0 ? '#2E7D32' : '#C62828' }}>
-                      5yr {fmtROIx(roi5)}
-                    </span>
-                    <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold"
-                          style={{ background: roi10 >= 0 ? '#E8F5E9' : '#FEF3C7', color: roi10 >= 0 ? '#2E7D32' : '#B45309' }}>
-                      10yr {fmtROIx(roi10)}
-                    </span>
-                  </div>
-
-                  <div className="rounded-lg p-3" style={{ background: '#F7FAFC' }}>
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2 flex items-center gap-1">
-                      <Target size={10} /> Adherence
-                    </div>
-                    <div className="text-[11px] text-gray-600 space-y-1">
-                      <div className="flex justify-between">
-                        <span>Baseline</span>
-                        <span className="font-mono font-semibold text-gray-700">{fmtPct(alphaBase)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>With program</span>
-                        <span className="font-mono font-semibold" style={{ color: '#2E7D32' }}>{fmtPct(alphaWith)}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+function DarkStat({ label, value, color }) {
+  return (
+    <div>
+      <div className="text-[10px] uppercase tracking-[0.14em] font-semibold mb-2" style={{ color: HERO_LABEL }}>{label}</div>
+      <div className="font-display text-xl font-semibold tabular-nums leading-none transition-colors" style={{ color }}>
+        {value}
       </div>
     </div>
   );

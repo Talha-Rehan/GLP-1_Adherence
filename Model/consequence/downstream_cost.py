@@ -4,7 +4,7 @@ Downstream Cost Model — Phase 1 of the Consequence Model layer.
 Reads:
     Backend/data/GLP1_FINAL_WITH_SURVIVAL.csv   (patient baselines + dropout timing)
     Backend/data/GLP1_SEGMENTED.csv             (segment labels — joined via row order)
-    evidence/parameter_registry.csv             (sourced clinical/economic params)
+    docs/evidence/parameter_registry.csv             (sourced clinical/economic params)
 
 Writes:
     Backend/data/progression_cost.csv           (per-patient projected downstream cost)

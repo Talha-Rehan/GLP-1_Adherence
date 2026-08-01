@@ -3,7 +3,7 @@ Rebound Risk Engine — Phase 2 of the Consequence Model layer.
 
 Reads:
     Backend/data/GLP1_FINAL_WITH_SURVIVAL.csv   (LBXGH, BMXBMI, assigned_molecule, time_to_dropout)
-    evidence/parameter_registry.csv             (rebound rates, plateaus, molecule efficacy)
+    docs/evidence/parameter_registry.csv        (rebound rates, plateaus, molecule efficacy)
 
 Writes:
     Backend/data/rebound_risk.csv               (per-patient rebound projection)
@@ -55,7 +55,7 @@ def cluster_median_dropout(df_patients: pd.DataFrame) -> Dict[int, float]:
         out[int(cluster)] = float(np.clip(med, SENSITIVITY_EARLY_DAY + 1, SENSITIVITY_LATE_DAY - 1))
     return out
 
-REGISTRY_PATH = PROJECT_ROOT / "evidence" / "parameter_registry.csv"
+REGISTRY_PATH = PROJECT_ROOT / "docs" / "evidence" / "parameter_registry.csv"
 DATA_DIR = PROJECT_ROOT / "Backend" / "data"
 SURVIVAL_PATH = DATA_DIR / "GLP1_FINAL_WITH_SURVIVAL.csv"
 OUTPUT_PATH = DATA_DIR / "rebound_risk.csv"

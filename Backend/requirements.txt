@@ -12,6 +12,9 @@ pydantic-settings==2.3.0
 motor==3.5.0
 pymongo==4.8.0
 
+# --- Chatbot (Google Gemini) ---
+google-genai>=0.3.0
+
 # --- Tests (Model/consequence/tests/) ---
 pytest==9.1.0
 

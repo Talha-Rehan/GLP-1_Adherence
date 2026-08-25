@@ -3,6 +3,7 @@ import { RoleProvider } from './context/RoleContext';
 import { PatientsProvider } from './context/PatientsContext';
 import AppShell from './components/layout/AppShell';
 import LoadingScreen from './components/shared/LoadingScreen';
+import ChatWidget from './components/chatbot/ChatWidget';
 import { useAppLoader } from './hooks/useAppLoader';
 import ExecutiveSummary from './pages/ExecutiveSummary';
 import PatientRiskPanel from './pages/PatientRiskPanel';
@@ -37,6 +38,7 @@ export default function App() {
             <Route path="/consequence"  element={<CostOfInaction />} />
             <Route path="/settings"     element={<Settings />} />
           </Routes>
+          <ChatWidget />
         </AppShell>
       </BrowserRouter>
       </PatientsProvider>

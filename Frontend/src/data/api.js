@@ -16,6 +16,12 @@ async function post(path, body) {
   return res.json();
 }
 
+async function del(path) {
+  const res = await fetch(`${BASE}${path}`, { method: "DELETE" });
+  if (!res.ok) throw new Error(`API ${path} → ${res.status}`);
+  return res.json();
+}
+
 export const api = {
   getSummary:           ()       => get("/api/summary"),
   getGlobalSHAP:        ()       => get("/api/shap/global"),
@@ -34,4 +40,9 @@ export const api = {
   getPayerScenarios:    ()       => get("/api/consequence/payer-scenarios"),
   getPayerROI:          (interventionCost = 500, payerType = "current", adherenceUplift = 0.15) =>
     get(`/api/consequence/payer-roi?intervention_cost=${interventionCost}&payer_type=${payerType}&adherence_uplift=${adherenceUplift}`),
+
+  // Chatbot
+  postChatMessage:  (body)  => post("/api/chatbot/message", body),
+  getChatSession:   (id)    => get(`/api/chatbot/session/${id}`),
+  clearChatSession: (id)    => del(`/api/chatbot/session/${id}`),
 };

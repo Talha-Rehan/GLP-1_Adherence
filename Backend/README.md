@@ -41,7 +41,14 @@ MONGODB_URI=<your Atlas URI or mongodb://localhost:27017>
 MONGODB_DB_NAME=glp1_analytics
 DATA_DIR=./data
 CORS_ORIGINS=["http://localhost:5173","http://localhost:4173"]
+
+# Chatbot (optional — leave GOOGLE_API_KEY empty to disable the widget's live replies)
+GOOGLE_API_KEY=<get a free key at https://aistudio.google.com/app/apikey>
+GEMINI_MODEL=gemini-2.0-flash
+CHATBOT_ENABLED=true
 ```
+
+The chatbot uses **Google Gemini 2.0 Flash** on the free tier (~15 requests/min). If `GOOGLE_API_KEY` is empty, the chat endpoint still responds but returns a friendly "not configured" message so the UI doesn't break.
 
 ## API endpoints
 
@@ -57,4 +64,23 @@ CORS_ORIGINS=["http://localhost:5173","http://localhost:4173"]
 | GET | `/api/cost-effectiveness` | CEA ratios + ICER data |
 | POST | `/api/budget-impact` | Real-time budget impact calculation |
 | GET | `/api/model/info` | Model metadata and performance metrics |
+| GET | `/api/consequence/downstream-cost` | Markov-projected downstream cost per cluster |
+| GET | `/api/consequence/rebound-risk` | Metabolic rebound trajectories + T2D incidence |
+| GET | `/api/consequence/payer-roi` | Per-cluster payer ROI (with `intervention_cost`, `payer_type`, `adherence_uplift` query args) |
+| POST | `/api/chatbot/message` | Ask the assistant a question (see below) |
+| GET | `/api/chatbot/session/{id}` | Fetch a chat session's history |
+| DELETE | `/api/chatbot/session/{id}` | Clear a chat session |
 | GET | `/health` | Health check |
+
+## Chatbot
+
+`POST /api/chatbot/message` runs Google Gemini in a **function-calling loop** against a catalog of 14 tools that wrap every read endpoint on this API (plus the budget simulator). The system prompt includes a live snapshot of headline KPIs so aggregate questions ("how many patients?", "which segment has the highest dropout?") are answered without any tool call. Everything else — a specific patient, a custom budget/ROI scenario, per-cluster deep dives — triggers a tool call.
+
+Sessions are kept in-memory (LRU-capped at 1,000 sessions, 24h TTL) and cleared on server restart.
+
+Quick smoke test:
+```bash
+curl -X POST http://localhost:8000/api/chatbot/message \
+  -H "Content-Type: application/json" \
+  -d '{"messages":[{"role":"user","content":"Which segment has the highest dropout?"}]}'
+```

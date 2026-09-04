@@ -108,6 +108,7 @@ async def post_message(req: ChatRequest) -> ChatResponse:
                 "role": "assistant",
                 "content": response["text"] or "",
                 "function_calls": function_calls,
+                "model_content": response.get("model_content"),
             })
 
             for call in function_calls:

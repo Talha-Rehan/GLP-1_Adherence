@@ -41,6 +41,11 @@ def _to_content(msg: dict) -> types.Content:
       user      → user
       assistant → model
       function  → user (with function_response Part)
+
+    Assistant turns that came back from Gemini carry the raw `model_content`
+    Content object. Passing it back verbatim preserves opaque fields Gemini
+    requires on round-trip (thought_signature, etc.) — required for tool use
+    in Gemini 3.x+.
     """
     role = msg["role"]
 
@@ -54,6 +59,9 @@ def _to_content(msg: dict) -> types.Content:
                 )
             ],
         )
+
+    if role == "assistant" and msg.get("model_content") is not None:
+        return msg["model_content"]
 
     if role == "assistant" and msg.get("function_calls"):
         parts = []
@@ -125,9 +133,14 @@ async def chat(
                 contents=contents,
                 config=config,
             )
+            model_content = None
+            candidates = getattr(response, "candidates", None) or []
+            if candidates:
+                model_content = getattr(candidates[0], "content", None)
             return {
                 "text": _extract_text(response),
                 "function_calls": _extract_function_calls(response),
+                "model_content": model_content,
                 "raw": response,
             }
         except APIError as exc:

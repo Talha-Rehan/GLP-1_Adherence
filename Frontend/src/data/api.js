@@ -45,4 +45,6 @@ export const api = {
   postChatMessage:  (body)  => post("/api/chatbot/message", body),
   getChatSession:   (id)    => get(`/api/chatbot/session/${id}`),
   clearChatSession: (id)    => del(`/api/chatbot/session/${id}`),
+  register: (body) => post("/api/register", body),
+  login: (body) => post("/api/login", body),
 };

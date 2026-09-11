@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     google_api_key:  str  = ""
     gemini_model:    str  = "gemini-3.6-flash"
     chatbot_enabled: bool = True
-    secret_key: str = "dev-only-change-me"
+    secret_key: str
 
     class Config:
         env_file = ".env"

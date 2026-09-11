@@ -35,3 +35,9 @@ dist/
 # OS
 .DS_Store
 Thumbs.db
+
+# Claude Code
+# Skills are private by default — a new skill under .claude/skills/ stays local.
+# To share one with the team, add an explicit un-ignore line for it below.
+.claude/skills/*
+!.claude/skills/api-conventions/

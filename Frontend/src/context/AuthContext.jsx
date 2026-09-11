@@ -10,8 +10,14 @@ export function AuthProvider({ children }) {
   const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY));
   const [user, setUser]   = useState(() => {
     const raw = localStorage.getItem(USER_KEY);
-    return raw ? JSON.parse(raw) : null;
-  });
+    if (!raw) return null;
+    try {
+        return JSON.parse(raw);
+    } catch {
+        localStorage.removeItem(USER_KEY);
+        return null;
+    }
+    });
 
   const _persist = (accessToken, userObj) => {
     localStorage.setItem(TOKEN_KEY, accessToken);

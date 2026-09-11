@@ -8,6 +8,7 @@ mismatch bug). Login issues a short-lived JWT via python-jose.
 """
 
 from datetime import datetime, timedelta, timezone
+from pymongo.errors import DuplicateKeyError 
 
 import bcrypt
 from fastapi import APIRouter, HTTPException
@@ -17,7 +18,7 @@ from core.config import settings
 from core.mongo import get_db
 from schemas.user import UserCreate, UserLogin, UserPublic, TokenResponse
 
-router = APIRouter()
+router = APIRouter(prefix="/auth", tags=["auth"])
 
 _ALGORITHM = "HS256"
 _TOKEN_EXPIRE_MINUTES = 60 * 24  # 24h
@@ -50,7 +51,10 @@ async def register(body: UserCreate):
         "password_hash": _hash_password(body.password),
         "created_at":    datetime.now(timezone.utc),
     }
-    result = await db.users.insert_one(doc)
+    try:
+        result = await db.users.insert_one(doc)
+    except DuplicateKeyError:
+        raise HTTPException(status_code=409, detail="An account with this email already exists")
     user_id = str(result.inserted_id)
 
     return TokenResponse(

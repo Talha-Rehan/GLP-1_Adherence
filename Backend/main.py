@@ -14,6 +14,7 @@ async def lifespan(app: FastAPI):
     mongo.get_client()
     await mongo.ping()
     print(f"🔌  Connected to MongoDB: {settings.mongodb_db_name}")
+    await mongo.get_db().users.create_index("email", unique=True)
     loader.load_binary_artifacts()
     await init_startup_caches()
     yield

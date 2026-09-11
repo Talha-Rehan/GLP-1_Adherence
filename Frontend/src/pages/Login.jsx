@@ -72,6 +72,7 @@ export default function Login() {
               type="password"
               required
               minLength={8}
+              maxLength={72}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               style={styles.input}

@@ -175,6 +175,7 @@ MONGODB_URI=mongodb+srv://your_user:URL_ENCODED_PWD@cluster0.xxxxx.mongodb.net/?
 MONGODB_DB_NAME=glp1_analytics
 DATA_DIR=./data
 CORS_ORIGINS=["http://localhost:5173","http://localhost:4173"]
+SECRET_KEY=<run: python -c "import secrets; print(secrets.token_hex(32))">
 ```
 
 ### 4. Confirm pipeline artifacts are present

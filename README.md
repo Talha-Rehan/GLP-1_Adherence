@@ -82,7 +82,8 @@ GLP-1_Adherence/
 │   ├── scripts/migrate_csv_to_mongo.py
 │   │                              ← one-shot seeder: pipeline CSVs → Mongo collections
 │   ├── data/                      ← pipeline output CSVs (gitignored; seed source)
-│   ├── requirements.txt
+│   ├── requirements.txt           ← API runtime deps only (what a host installs)
+│   ├── requirements-dev.txt       ← + seeder, notebooks, tests, collectors
 │   └── README.md                  ← backend-specific docs
 │
 ├── Frontend/                      ← React + Vite dashboard
@@ -138,7 +139,7 @@ git clone <repo-url>
 cd GLP-1_Adherence/Backend
 python -m venv venv
 source venv/bin/activate            # Windows: venv\Scripts\activate
-pip install -r requirements.txt
+pip install -r requirements-dev.txt # runtime + seeder/notebook/test deps
 ```
 
 ### 2. Set up MongoDB

@@ -1,11 +1,18 @@
-from pydantic_settings import BaseSettings
+from pathlib import Path
 from typing import List
+
+from pydantic_settings import BaseSettings
+
+# Backend/ — resolved from this file so the default works regardless of the
+# process working directory (uvicorn from Backend/, or a serverless runtime
+# that starts in /var/task).
+_BACKEND_DIR = Path(__file__).resolve().parent.parent
 
 
 class Settings(BaseSettings):
     mongodb_uri:     str
     mongodb_db_name: str = "glp1_analytics"
-    data_dir:        str = "./data"
+    data_dir:        str = str(_BACKEND_DIR / "data")
     cors_origins:    List[str] = ["http://localhost:5173", "http://localhost:4173"]
 
     google_api_key:  str  = ""

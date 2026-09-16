@@ -97,7 +97,7 @@ export default function Settings() {
           ))}
         </div>
 
-        <div className="mt-5 grid grid-cols-4 gap-4 pt-5 border-t border-gray-100">
+        <div className="mt-5 grid grid-cols-2 md:grid-cols-4 gap-4 pt-5 border-t border-gray-100">
           {[
             ['Decision Threshold', modelInfo.threshold.toFixed(2)],
             ['Training Set',       `${modelInfo.trainSize.toLocaleString()} pts`],

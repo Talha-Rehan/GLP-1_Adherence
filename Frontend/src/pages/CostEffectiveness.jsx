@@ -77,10 +77,10 @@ export default function CostEffectiveness() {
         </div>
       )}
 
-      <div className="flex gap-5 items-start">
+      <div className="flex flex-col lg:flex-row gap-5 items-stretch lg:items-start">
 
         {/* ── Controls sidebar (35%) ──────────────────────────── */}
-        <aside className="w-[300px] flex-shrink-0 space-y-4">
+        <aside className="w-full lg:w-[300px] flex-shrink-0 space-y-4">
 
           {/* Segment selector */}
           <div className="card p-5">

@@ -85,7 +85,7 @@ export default function DownstreamCostPanel() {
         />
 
         {/* KPI cards */}
-        <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           {loading ? (
             <>
               <SkeletonCard h={110} /><SkeletonCard h={110} /><SkeletonCard h={110} />
@@ -117,7 +117,7 @@ export default function DownstreamCostPanel() {
       </div>
 
       {/* Per-cluster cards */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {loading
           ? Array.from({ length: 4 }, (_, i) => <SkeletonCard key={i} h={180} />)
           : clusterCards}

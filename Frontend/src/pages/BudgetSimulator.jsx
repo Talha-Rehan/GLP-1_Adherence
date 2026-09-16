@@ -164,13 +164,13 @@ export default function BudgetSimulator() {
 
       {/* ── Clinician context banner ─────────────────────────────── */}
       {!isInsurer && (
-        <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl text-sm font-medium animate-fade-up"
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 px-4 py-3 rounded-xl text-sm font-medium animate-fade-up"
           style={{ background: '#F0FFF4', color: '#2E7D32', border: '1px solid #C8E6C9' }}>
           <span className="flex items-center gap-2.5">
             <Stethoscope size={15} />
             Clinician View — This simulator is designed for Insurer/Payer financial planning. All tools remain accessible.
           </span>
-          <div className="flex items-center gap-3 text-xs font-semibold flex-shrink-0">
+          <div className="flex flex-wrap items-center gap-3 text-xs font-semibold flex-shrink-0">
             <Link to="/patients" className="hover:underline underline-offset-2" style={{ color: '#2E7D32' }}>Patient Risk Panel →</Link>
             <Link to="/"         className="hover:underline underline-offset-2" style={{ color: '#2E7D32' }}>Executive Summary →</Link>
           </div>
@@ -178,7 +178,7 @@ export default function BudgetSimulator() {
       )}
 
       {/* ── Sliders ────────────────────────────────────────────── */}
-      <div className="card p-6">
+      <div className="card p-5 md:p-6">
         <SectionHeader
           title="Scenario Parameters"
           sub="Adjust assumptions to model different intervention strategies"
@@ -193,7 +193,7 @@ export default function BudgetSimulator() {
               {exported ? 'Exported!' : 'Export Scenario'}
             </button>
           } />
-        <div className="grid grid-cols-3 gap-10">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-10">
           <ScenarioSlider
             label="Dropout Reduction Assumed"
             sub="From intervention program"
@@ -216,7 +216,7 @@ export default function BudgetSimulator() {
       {isLoading ? (
         <SkeletonCard h={140} />
       ) : (
-      <div className="card p-6 flex items-center justify-between gap-6"
+      <div className="card p-5 md:p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-6"
            style={{
              background:   totalNet > 0 ? 'linear-gradient(135deg, #E8F5E9, #F1F8E9)' : 'linear-gradient(135deg, #FFEBEE, #FFF3F3)',
              borderColor:  totalNet > 0 ? '#C8E6C9' : '#FFCDD2',
@@ -237,7 +237,7 @@ export default function BudgetSimulator() {
             {scope}% of population · ${interventionCost}/pt · {dropoutReduction}% dropout reduction
           </div>
         </div>
-        <div className="grid grid-cols-3 gap-8 text-center flex-shrink-0">
+        <div className="grid grid-cols-3 gap-4 md:gap-8 text-center flex-shrink-0">
           {[
             ['Waste Recovered',   fmtMoney(totalWasteRecovered),   DollarSign,   '#2E7D32'],
             ['Intervention Cost', fmtMoney(totalInterventionCost), TrendingDown, '#EF6C00'],
@@ -254,7 +254,7 @@ export default function BudgetSimulator() {
       )}
 
       {/* ── Per-segment cards ───────────────────────────────────── */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {segmentCards}
       </div>
 

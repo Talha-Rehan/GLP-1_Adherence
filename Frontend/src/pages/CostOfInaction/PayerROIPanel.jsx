@@ -143,11 +143,11 @@ export default function PayerROIPanel() {
       <div className="card overflow-hidden p-0 animate-fade-up">
 
         {/* ── Top row: dark hero (left) + dark sliders (right) ─────────── */}
-        <div className="grid grid-cols-12" style={{ background: HERO_BG }}>
+        <div className="grid grid-cols-1 lg:grid-cols-12" style={{ background: HERO_BG }}>
 
           {/* Hero panel */}
-          <div className="col-span-5 px-8 py-9 flex flex-col"
-               style={{ borderRight: `1px solid ${HERO_DIVIDER}` }}>
+          <div className="lg:col-span-5 px-5 py-6 sm:px-8 sm:py-9 flex flex-col border-b lg:border-b-0 lg:border-r"
+               style={{ borderColor: HERO_DIVIDER }}>
             <div>
               <h2 className="font-display text-lg font-semibold text-white leading-tight">Payer ROI</h2>
               <p className="text-xs mt-1 leading-relaxed" style={{ color: HERO_MUTED }}>
@@ -180,7 +180,7 @@ export default function PayerROIPanel() {
               </div>
               <div className="flex items-baseline gap-3">
                 <span className="font-display font-semibold leading-none tabular-nums transition-colors"
-                      style={{ color: heroColor, fontSize: '4rem' }}>
+                      style={{ color: heroColor, fontSize: 'clamp(2.5rem, 10vw, 4rem)' }}>
                   {heroValue}
                 </span>
                 <span className="text-[11px] font-medium leading-relaxed" style={{ color: HERO_MUTED }}>
@@ -199,7 +199,7 @@ export default function PayerROIPanel() {
           </div>
 
           {/* Sliders panel — same dark bg */}
-          <div className="col-span-7 px-10 py-9 flex flex-col justify-center gap-9 animate-fade-up"
+          <div className="lg:col-span-7 px-5 py-6 sm:px-10 sm:py-9 flex flex-col justify-center gap-7 sm:gap-9 animate-fade-up"
                style={{ animationDelay: '0.24s' }}>
 
             <ControlSlider
@@ -222,7 +222,7 @@ export default function PayerROIPanel() {
         </div>
 
         {/* ── Full-width bar chart section ─────────────────────────────── */}
-        <div className="px-8 py-8 border-t border-gray-100">
+        <div className="px-5 py-6 sm:px-8 sm:py-8 border-t border-gray-100">
           <div className="mb-4 animate-fade-up" style={{ animationDelay: '0.32s' }}>
             <div className="text-sm font-semibold text-gray-900">Net ROI by cluster</div>
             <div className="text-[11px] text-gray-400 mt-0.5">At 1, 3, 5, and 10-year horizons</div>

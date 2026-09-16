@@ -6,7 +6,7 @@ FastAPI backend for the GLP-1 Adherence & Cost Intelligence Platform.
 
 ```bash
 cd Backend
-pip install -r requirements.txt
+pip install -r requirements-dev.txt   # requirements.txt alone is enough to *serve* the API
 uvicorn main:app --reload --port 8000
 ```
 

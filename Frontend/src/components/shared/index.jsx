@@ -98,7 +98,7 @@ export function SHAPDriverCard({ rank, driver, direction, shap, delay = 0 }) {
 // ── Section Header ────────────────────────────────────────────────────────────
 export function SectionHeader({ title, sub, action }) {
   return (
-    <div className="flex items-start justify-between mb-4">
+    <div className="flex items-start justify-between gap-3 flex-wrap mb-4">
       <div>
         <h2 className="font-display text-base font-semibold text-gray-800">{title}</h2>
         {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}

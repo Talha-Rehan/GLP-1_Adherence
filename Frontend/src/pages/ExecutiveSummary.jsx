@@ -93,7 +93,7 @@ function PopulationBar({ totalN, segmentCards }) {
             — {totalN.toLocaleString()} total
           </span>
         </div>
-        <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+        <span className="hidden sm:block text-xs font-semibold uppercase tracking-wider text-gray-400">
           Share of Total
         </span>
       </div>
@@ -119,7 +119,7 @@ function PopulationBar({ totalN, segmentCards }) {
           <div
             key={i}
             style={{ width: `${seg.shareOfTotal * 100}%` }}
-            className="text-[11px] text-gray-400 font-mono"
+            className="text-[11px] text-gray-400 font-mono overflow-hidden whitespace-nowrap"
           >
             {Math.round(seg.shareOfTotal * 100)}%
           </div>
@@ -164,7 +164,7 @@ export default function ExecutiveSummary() {
           (summaryKPIs.totalPatients ?? summaryKPIs.total_patients ?? 0)
         );
         return dropouts > 0 ? (
-          <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl text-sm font-medium animate-fade-up"
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 px-4 py-3 rounded-xl text-sm font-medium animate-fade-up"
             style={{ background: '#FFEBEE', color: '#C62828', border: '1px solid #FFCDD2' }}>
             <span className="flex items-center gap-2.5">
               <Bell size={15} />
@@ -329,7 +329,7 @@ export default function ExecutiveSummary() {
                 }))} layout="vertical" margin={{ left: 0, right: 24, top: 4, bottom: 0 }}>
                   <CartesianGrid horizontal={false} strokeDasharray="3 3" stroke="#EDF2F7" />
                   <XAxis type="number" tickFormatter={v => `$${(v/1e6).toFixed(1)}M`} tick={{ fontSize: 10, fill: '#718096' }} axisLine={{ stroke: '#E2E8F0' }} tickLine={false} />
-                  <YAxis type="category" dataKey="name" width={110} tick={{ fontSize: 11, fill: '#718096' }} axisLine={false} tickLine={false} />
+                  <YAxis type="category" dataKey="name" width={90} tick={{ fontSize: 10, fill: '#718096' }} axisLine={false} tickLine={false} />
                   <Tooltip content={<ChartTooltip formatter={v => `$${v.toLocaleString()}`} />} />
                   <Bar dataKey="spend" name="Wasted Spend" radius={[0,4,4,0]}>
                     {adherenceBySegment.map((s, i) => <Cell key={i} fill={s.color} />)}

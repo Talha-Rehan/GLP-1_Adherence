@@ -99,7 +99,7 @@ export default function SegmentExplorer() {
       {mode === 'single' ? (
         <>
           {/* ── Three-panel row ──────────────────────────────── */}
-          <div className="grid grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
 
             {/* Radar */}
             <div className="card p-5">
@@ -181,7 +181,7 @@ export default function SegmentExplorer() {
             <SectionHeader
               title="Cost-Effectiveness Comparison"
               sub="Cost per unit of clinical outcome — lower is better" />
-            <div className="grid grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {['cost_per_hba1c', 'cost_per_weight'].map(metric => (
                 <div key={metric}>
                   <div className="text-xs text-gray-500 mb-3">
@@ -229,7 +229,7 @@ export default function SegmentExplorer() {
               <div className="flex justify-between text-[10px] text-gray-400 -mt-3 mb-5">
                 <span>5%</span><span>50%</span>
               </div>
-              <div className="grid grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
                 {roiResults.map((r, i) => (
                   <div key={i} className="rounded-xl p-4"
                        style={{ background: `${SEGMENT_COLORS[i]}0D`, border: `1px solid ${SEGMENT_COLORS[i]}28` }}>

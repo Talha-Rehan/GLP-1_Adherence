@@ -161,7 +161,7 @@ export default function SurvivalAnalysis() {
       </div>
 
       {/* ── Median survival cards ──────────────────────────────── */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {survivalCurves.map(sc => {
           const med = medianSurvival[sc.cluster];
           return (

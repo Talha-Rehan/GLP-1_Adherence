@@ -40,13 +40,13 @@ export default function CostOfInaction() {
     <div className="max-w-[1200px] mx-auto space-y-5 animate-fade-in">
       {/* Clinician view banner */}
       {!isInsurer && (
-        <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl text-sm font-medium animate-fade-up"
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 px-4 py-3 rounded-xl text-sm font-medium animate-fade-up"
           style={{ background: '#F0FFF4', color: '#2E7D32', border: '1px solid #C8E6C9' }}>
           <span className="flex items-center gap-2.5">
             <Stethoscope size={15} />
             Clinician View — This screen is designed for Insurer/Payer financial planning. All tools remain accessible.
           </span>
-          <div className="flex items-center gap-3 text-xs font-semibold flex-shrink-0">
+          <div className="flex flex-wrap items-center gap-3 text-xs font-semibold flex-shrink-0">
             <Link to="/patients" className="hover:underline underline-offset-2" style={{ color: '#2E7D32' }}>Patient Risk Panel →</Link>
             <Link to="/"         className="hover:underline underline-offset-2" style={{ color: '#2E7D32' }}>Executive Summary →</Link>
           </div>
@@ -79,12 +79,12 @@ export default function CostOfInaction() {
       </div>
 
       {/* Sticky sub-nav */}
-      <div className="sticky top-0 z-10 -mx-6 px-6 py-2"
+      <div className="sticky top-0 z-10 -mx-4 px-4 lg:-mx-6 lg:px-6 py-2"
            style={{ background: 'var(--bg-canvas)', borderBottom: '1px solid var(--border)' }}>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 overflow-x-auto">
           {SUB_NAV.map(({ id, label, icon: Icon }) => (
             <button key={id} onClick={() => scrollTo(id)}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap flex-shrink-0"
               style={{
                 background: active === id ? 'var(--color-primary)' : 'transparent',
                 color:      active === id ? 'white' : 'var(--text-secondary)',

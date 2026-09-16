@@ -114,7 +114,7 @@ export default function ReboundRiskPanel() {
       </div>
 
       {/* Severity gauge cards */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {loading
           ? Array.from({ length: 4 }, (_, i) => <SkeletonCard key={i} h={200} />)
           : clusters.map((c, i) => {

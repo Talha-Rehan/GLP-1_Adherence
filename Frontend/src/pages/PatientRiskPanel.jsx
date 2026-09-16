@@ -305,13 +305,13 @@ export default function PatientRiskPanel() {
     <div className="risk-panel-page animate-fade-in">
       {/* ── Insurer context banner ───────────────────────────────── */}
       {isInsurer && (
-        <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl text-sm font-medium mb-4 animate-fade-up"
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 px-4 py-3 rounded-xl text-sm font-medium mb-4 animate-fade-up"
           style={{ background: '#EBF4FF', color: '#1B4F8A', border: '1px solid #BFDBFE' }}>
           <span className="flex items-center gap-2.5">
             <Building2 size={15} />
             Insurer View — This panel is optimized for Case Managers. Individual patient data is available for reference.
           </span>
-          <div className="flex items-center gap-3 text-xs font-semibold flex-shrink-0">
+          <div className="flex flex-wrap items-center gap-3 text-xs font-semibold flex-shrink-0">
             <Link to="/cost" className="hover:underline underline-offset-2" style={{ color: '#1B4F8A' }}>Cost-Effectiveness →</Link>
             <Link to="/budget" className="hover:underline underline-offset-2" style={{ color: '#1B4F8A' }}>Budget Simulator →</Link>
           </div>
@@ -329,14 +329,13 @@ export default function PatientRiskPanel() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <div className="relative">
+          <div className="relative flex-1 sm:flex-none">
             <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
               value={search}
               onChange={e => { setSearch(e.target.value); setPage(0); }}
               placeholder="Search patients or drivers…"
-              className="text-xs pl-8 pr-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white"
-              style={{ width: 220 }}
+              className="text-xs pl-8 pr-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white w-full sm:w-[220px]"
             />
           </div>
           <button

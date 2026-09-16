@@ -41,6 +41,7 @@ MONGODB_URI=<your Atlas URI or mongodb://localhost:27017>
 MONGODB_DB_NAME=glp1_analytics
 DATA_DIR=./data
 CORS_ORIGINS=["http://localhost:5173","http://localhost:4173"]
+SECRET_KEY=<run: python -c "import secrets; print(secrets.token_hex(32))">
 
 # Chatbot (optional — leave GOOGLE_API_KEY empty to disable the widget's live replies)
 GOOGLE_API_KEY=<get a free key at https://aistudio.google.com/app/apikey>

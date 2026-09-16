@@ -1,10 +1,12 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { RoleProvider } from './context/RoleContext';
 import { PatientsProvider } from './context/PatientsContext';
 import AppShell from './components/layout/AppShell';
 import LoadingScreen from './components/shared/LoadingScreen';
 import ChatWidget from './components/chatbot/ChatWidget';
 import { useAppLoader } from './hooks/useAppLoader';
+import Login from './pages/Login';
 import ExecutiveSummary from './pages/ExecutiveSummary';
 import PatientRiskPanel from './pages/PatientRiskPanel';
 import PatientDetail from './pages/PatientDetail';
@@ -15,7 +17,7 @@ import BudgetSimulator from './pages/BudgetSimulator';
 import CostOfInaction from './pages/CostOfInaction';
 import Settings from './pages/Settings';
 
-export default function App() {
+function AuthenticatedApp() {
   const { ready, progress, status } = useAppLoader();
 
   if (!ready) {
@@ -25,7 +27,6 @@ export default function App() {
   return (
     <RoleProvider>
       <PatientsProvider>
-      <BrowserRouter>
         <AppShell>
           <Routes>
             <Route path="/"             element={<ExecutiveSummary />} />
@@ -37,11 +38,38 @@ export default function App() {
             <Route path="/budget"       element={<BudgetSimulator />} />
             <Route path="/consequence"  element={<CostOfInaction />} />
             <Route path="/settings"     element={<Settings />} />
+            <Route path="*"             element={<Navigate to="/" replace />} />
           </Routes>
           <ChatWidget />
         </AppShell>
-      </BrowserRouter>
       </PatientsProvider>
     </RoleProvider>
+  );
+}
+
+function RootRoutes() {
+  const { isAuthenticated } = useAuth();
+
+  return (
+    <Routes>
+      <Route
+        path="/login"
+        element={isAuthenticated ? <Navigate to="/" replace /> : <Login />}
+      />
+      <Route
+        path="/*"
+        element={isAuthenticated ? <AuthenticatedApp /> : <Navigate to="/login" replace />}
+      />
+    </Routes>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <BrowserRouter>
+        <RootRoutes />
+      </BrowserRouter>
+    </AuthProvider>
   );
 }

@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useRole } from '../../context/RoleContext';
+import { useAuth } from '../../context/AuthContext';
 import {
   LayoutDashboard, Users, UserCircle, PieChart, TrendingDown,
   DollarSign, Calculator, Settings, ChevronLeft, ChevronRight,
-  Activity, Building2, Stethoscope, AlertTriangle,
+  Activity, Building2, Stethoscope, AlertTriangle, LogOut,
 } from 'lucide-react';
 
 const NAV_ITEMS = [
@@ -48,6 +49,7 @@ function NavItem({ item, collapsed, isInsurer, extra = {} }) {
 export default function AppShell({ children }) {
   const [collapsed, setCollapsed] = useState(false);
   const { role, setRole, isInsurer } = useRole();
+  const { logout } = useAuth();
   const location = useLocation();
 
   const pageTitle = NAV_ITEMS.find(n => n.to === location.pathname)?.label ?? 'GLP-1 Platform';
@@ -138,7 +140,17 @@ export default function AppShell({ children }) {
             {!collapsed && <span className="animate-fade-in">Settings & Data Info</span>}
           </NavLink>
         </nav>
-
+        {/* Logout button */}
+        <div className="px-2 pb-1">
+          <button
+            onClick={logout}
+            className="w-full flex items-center justify-center gap-1.5 h-9 rounded-lg text-xs font-medium transition-all hover:opacity-90"
+            style={{ background: 'var(--color-primary-light)', color: '#fff' }}
+          >
+            <LogOut size={14} />
+            {!collapsed && <span className="animate-fade-in">Log out</span>}
+          </button>
+        </div>
         {/* Collapse toggle */}
         <div className="border-t border-white/10 p-2">
           <button

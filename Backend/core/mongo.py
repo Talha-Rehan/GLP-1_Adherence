@@ -25,6 +25,8 @@ def get_client() -> AsyncIOMotorClient:
 def get_db() -> AsyncIOMotorDatabase:
     return get_client()[settings.mongodb_db_name]
 
+def get_shared_identity_db() -> AsyncIOMotorDatabase:
+    return get_client()[settings.shared_identity_db_name]
 
 async def ping() -> None:
     await get_client().admin.command("ping")

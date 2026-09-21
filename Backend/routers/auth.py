@@ -18,7 +18,7 @@ from schemas.user import SignupRequest, UserLogin, UserPublic, TokenResponse, VA
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 _ALGORITHM = "HS256"
-_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24h
+_TOKEN_EXPIRE_MINUTES = 60 * 12  # 12h
 
 
 def _hash_password(password: str) -> str:

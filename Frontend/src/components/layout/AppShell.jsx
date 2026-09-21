@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import {
   LayoutDashboard, Users, UserCircle, PieChart, TrendingDown,
   DollarSign, Calculator, Settings, ChevronLeft, ChevronRight,
-  Activity, Building2, Stethoscope, AlertTriangle, LogOut, Menu, X,
+  Activity, Building2, Stethoscope, AlertTriangle, LogOut, Menu, X, ExternalLink,
 } from 'lucide-react';
 
 const NAV_ITEMS = [
@@ -50,7 +50,7 @@ export default function AppShell({ children }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const { role, setRole, isInsurer } = useRole();
-  const { logout } = useAuth();
+  const { logout, user, token } = useAuth();
   const location = useLocation();
 
   const pageTitle = NAV_ITEMS.find(n => n.to === location.pathname)?.label ?? 'GLP-1 Platform';
@@ -172,6 +172,28 @@ export default function AppShell({ children }) {
             {!isCollapsed && <span className="animate-fade-in">Settings & Data Info</span>}
           </NavLink>
         </nav>
+        {/* Switch App */}
+      {!collapsed && user?.app_access?.includes('readmissions') && (
+        <div className="mx-3 mb-2 pt-2 border-t border-white/10">
+          <div className="text-[10px] text-white/25 uppercase tracking-widest px-1 pb-1">
+            Switch App
+          </div>
+          <a
+            href={`${import.meta.env.VITE_READMISSIONS_URL ?? 'https://preventra-cms-mimic.vercel.app'}/#token=${encodeURIComponent(token)}`}
+            className="flex items-center justify-between px-3 py-2 rounded-lg text-xs text-white/70 hover:bg-white/08 hover:text-white transition-colors"
+          >
+            <span className="flex items-center gap-2">
+              <ExternalLink size={13} />
+              Readmissions
+            </span>
+          </a>
+          {user?.email && (
+            <div className="px-1 pt-1 text-[10px] text-white/30 truncate">
+              {user.email}
+            </div>
+          )}
+        </div>
+      )}
         {/* Logout button */}
         <div className="px-2 pb-1">
           <button

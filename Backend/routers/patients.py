@@ -9,10 +9,12 @@ both the clinical fields and the SHAP driver columns.
 import asyncio
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
 
 import core.model as model
 from core.mongo import get_db
+from core.security import verify_token
+from schemas.patient_views import PatientPharmacyView
 
 router = APIRouter()
 
@@ -92,6 +94,7 @@ async def get_patients(
     sort_by:        str             = Query("dropout_prob"),
     sort_dir:       str             = Query("desc"),
     search:         Optional[str]   = Query(None),
+    claims:         dict            = Depends(verify_token),
 ):
     db = get_db()
     match = _build_match(segment, molecule, min_risk, prediction, financial_only, search)
@@ -125,7 +128,7 @@ async def get_patients(
 
 
 @router.get("/patients/{patient_idx}")
-async def get_patient(patient_idx: int):
+async def get_patient(patient_idx: int, claims: dict = Depends(verify_token)):
     db = get_db()
     doc = await db.patients.find_one({"patient_idx": patient_idx}, {"_id": 0})
     if doc is None:
@@ -160,3 +163,17 @@ async def get_patient(patient_idx: int):
         "shap_drivers":     shap_drivers,
         "segment_survival": seg_surv,
     }
+    
+@router.get("/patients/{patient_idx}/pharmacy-view", response_model=PatientPharmacyView)
+async def get_patient_pharmacy_view(patient_idx: int, claims: dict = Depends(verify_token)):
+    db = get_db()
+    doc = await db.patients.find_one({"patient_idx": patient_idx}, {"_id": 0})
+    if doc is None:
+        raise HTTPException(status_code=404, detail=f"Patient {patient_idx} not found")
+
+    return PatientPharmacyView(
+        patient_idx=int(doc.get("patient_idx", 0)),
+        assigned_molecule=str(doc.get("assigned_molecule") or "UNKNOWN"),
+        drug_generation=doc.get("drug_generation"),
+        system_refill_score=doc.get("system_refill_score"),
+    )

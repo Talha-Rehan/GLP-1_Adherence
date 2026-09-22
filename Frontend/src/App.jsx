@@ -1,12 +1,12 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { useEffect } from 'react';
+import { AuthProvider, useAuth, PORTAL_URL } from './context/AuthContext';
 import { RoleProvider } from './context/RoleContext';
 import { PatientsProvider } from './context/PatientsContext';
 import AppShell from './components/layout/AppShell';
 import LoadingScreen from './components/shared/LoadingScreen';
 import ChatWidget from './components/chatbot/ChatWidget';
 import { useAppLoader } from './hooks/useAppLoader';
-import Login from './pages/Login';
 import ExecutiveSummary from './pages/ExecutiveSummary';
 import PatientRiskPanel from './pages/PatientRiskPanel';
 import PatientDetail from './pages/PatientDetail';
@@ -47,18 +47,23 @@ function AuthenticatedApp() {
   );
 }
 
+// GLP-1 no longer has its own login screen — an unauthenticated visitor
+// gets sent straight back to the shared Portal instead.
+function RedirectToPortal() {
+  useEffect(() => {
+    window.location.href = PORTAL_URL;
+  }, []);
+  return <LoadingScreen progress={0} status="Redirecting to sign in..." />;
+}
+
 function RootRoutes() {
   const { isAuthenticated } = useAuth();
 
   return (
     <Routes>
       <Route
-        path="/login"
-        element={isAuthenticated ? <Navigate to="/" replace /> : <Login />}
-      />
-      <Route
         path="/*"
-        element={isAuthenticated ? <AuthenticatedApp /> : <Navigate to="/login" replace />}
+        element={isAuthenticated ? <AuthenticatedApp /> : <RedirectToPortal />}
       />
     </Routes>
   );
